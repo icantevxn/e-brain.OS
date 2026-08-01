@@ -8,8 +8,15 @@ import { readArchive, writeArchive, initArchive } from "./db.js";
    to be triaged later from either device.
 ═══════════════════════════════════════════════ */
 
+/* The id never changes — it is what existing captures are filed under, and
+   renaming the world must not strand them. Only the display name moved. */
 export const INBOX_ID = "inbox";
-const INBOX_NAME = "Inbox";
+const INBOX_NAME = "In Orbit";
+
+/* What the world used to be called. If it still carries this name we quietly
+   update it; if it has been renamed to anything else, that was deliberate and
+   we leave it alone. */
+const PREVIOUS_NAME = "Inbox";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -63,15 +70,23 @@ async function attemptFile(fields, attempts) {
     if (idx === -1) {
       worlds.unshift({ id: INBOX_ID, name: INBOX_NAME, type: "fashion", items: [item] });
     } else {
+      const inbox = worlds[idx];
+
       // Clicking the bookmarklet twice on the same page is easy to do and
       // shouldn't leave two identical entries to clean up. Matched on name,
       // which for a capture is the page title.
-      const existing = worlds[idx].items.find(
+      const existing = inbox.items.find(
         (i) => normalize(i.name) === normalize(item.name)
       );
       if (existing) return { ok: true, item: existing, duplicate: true };
 
-      worlds[idx] = { ...worlds[idx], items: [item, ...worlds[idx].items] };
+      worlds[idx] = {
+        ...inbox,
+        // Carry the old default name forward, once. A world renamed to anything
+        // else was renamed on purpose, so it keeps whatever it was given.
+        name: inbox.name === PREVIOUS_NAME ? INBOX_NAME : inbox.name,
+        items: [item, ...inbox.items],
+      };
     }
 
     const result = await writeArchive(worlds, archive.version);

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { Plus, Pencil } from "lucide-react";
 import ObjectCard from "@/components/ObjectCard";
 import DeleteButton from "@/components/DeleteButton";
+import MoveControl from "@/components/MoveControl";
 import WorldDialog from "@/components/WorldDialog";
 import ItemDialog from "@/components/ItemDialog";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,12 @@ export default function WorldView() {
                   >
                     <Pencil className="size-3.5" />
                   </button>
+                  <MoveControl
+                    compact
+                    worlds={worlds}
+                    currentWorldId={world.id}
+                    onMove={(target) => updateItem(world.id, it.id, { moveTo: target })}
+                  />
                   <DeleteButton compact onDelete={() => removeItem(world.id, it.id)} />
                 </div>
               </div>

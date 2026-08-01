@@ -3,6 +3,7 @@ import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { Pencil, ArrowLeft, ExternalLink } from "lucide-react";
 import ItemDialog from "@/components/ItemDialog";
 import DeleteButton from "@/components/DeleteButton";
+import MoveControl from "@/components/MoveControl";
 import { Button } from "@/components/ui/button";
 import { useArchive } from "@/ArchiveContext";
 import { fmt, hexId } from "@/lib/format";
@@ -105,6 +106,16 @@ export default function ObjectView() {
               <Pencil className="size-3.5" />
               Edit
             </Button>
+            <MoveControl
+              worlds={worlds}
+              currentWorldId={world.id}
+              onMove={(target) => {
+                updateItem(world.id, item.id, { moveTo: target });
+                const nextWorld = worlds.find((w) => w.id === target);
+                // The object's address changes with its world — follow it.
+                if (nextWorld) navigate(itemPath(nextWorld, item), { replace: true });
+              }}
+            />
             <DeleteButton
               onDelete={() => {
                 removeItem(world.id, item.id);

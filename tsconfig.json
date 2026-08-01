@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+
+    /* Conversion happens in batches. Files that have been converted are checked
+       strictly; the ones still in JavaScript are compiled but not checked, so
+       the build stays green throughout rather than gating on a single enormous
+       commit. checkJs flips on once the last file lands. */
+    "allowJs": true,
+    "checkJs": false,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "paths": { "@/*": ["./src/*"] }
+  },
+  "include": ["src", "api"],
+  /* The vendored dome is 900 lines of third-party JavaScript we patched rather
+     than wrote. Typing it would mean rewriting it, and it has its own tests in
+     the form of the app working. */
+  "exclude": ["node_modules", "dist", "src/components/vendor"]
+}
