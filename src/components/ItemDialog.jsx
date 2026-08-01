@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Link2, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { STATUS } from "@/lib/status";
 import { typeOf, capitalize } from "@/lib/types";
+import { captureUrl } from "@/lib/remote";
 import { cn } from "@/lib/utils";
 
 const monoLabel = "font-mono text-[10px] uppercase tracking-[0.18em]";
@@ -28,8 +29,54 @@ export default function ItemDialog({ modal, world, onSave, onDelete, onClose }) 
   const [image, setImage] = useState(it.image || "");
   const [notes, setNotes] = useState(it.notes || "");
 
+  const [link, setLink] = useState("");
+  const [capturing, setCapturing] = useState(false);
+  const [captureNote, setCaptureNote] = useState(null);
+
   const isNew = modal.mode === "new";
   const valid = name.trim().length > 0;
+
+  /**
+   * Pull what the page says about itself and fill the blanks.
+   *
+   * Deliberately only fills empty fields — a capture run against a half-filled
+   * form should never wipe something typed by hand.
+   */
+  const capture = async () => {
+    const url = link.trim();
+    if (!url || capturing) return;
+
+    setCapturing(true);
+    setCaptureNote(null);
+    try {
+      const { fields, meta } = await captureUrl(url);
+
+      setName((v) => v || fields.name);
+      setBrand((v) => v || fields.brand);
+      setPrice((v) => v || fields.price);
+      setImage((v) => v || fields.image);
+      setNotes((v) => v || fields.notes);
+
+      if (meta.blocked) {
+        setCaptureNote({
+          tone: "warn",
+          text: "That site blocks automated reads — fill it in by hand",
+        });
+      } else if (!fields.name && !fields.image) {
+        setCaptureNote({ tone: "warn", text: "Nothing useful on that page" });
+      } else {
+        const still = ["name", "brand", "price", "image"].filter((k) => !fields[k]);
+        setCaptureNote({
+          tone: "ok",
+          text: still.length ? `Filled — still missing ${still.join(", ")}` : "Filled",
+        });
+      }
+    } catch {
+      setCaptureNote({ tone: "warn", text: "Couldn't reach the server" });
+    } finally {
+      setCapturing(false);
+    }
+  };
 
   const submit = (e) => {
     e.preventDefault();
@@ -55,6 +102,56 @@ export default function ItemDialog({ modal, world, onSave, onDelete, onClose }) 
             One {t.itemNoun} in {world?.name || "the archive"}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Capture. Only offered on new objects — running it over an existing
+            entry is a way to make a mess, not a shortcut. */}
+        {isNew && (
+          <div className="space-y-2 border-b pb-4">
+            <Label htmlFor="item-link" className={monoLabel}>
+              Paste a link
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="item-link"
+                value={link}
+                placeholder="https://…"
+                onChange={(e) => setLink(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter here means "fetch", not "submit the whole form".
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    capture();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={capture}
+                disabled={!link.trim() || capturing}
+                className="shrink-0 font-mono text-[10px] uppercase tracking-[0.15em]"
+              >
+                {capturing ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Link2 className="size-3.5" />
+                )}
+                {capturing ? "Reading" : "Fill"}
+              </Button>
+            </div>
+            {captureNote && (
+              <p
+                role="status"
+                className={cn(
+                  "font-mono text-[9px] uppercase tracking-[0.15em]",
+                  captureNote.tone === "ok" ? "text-owned" : "text-hunting"
+                )}
+              >
+                {captureNote.text}
+              </p>
+            )}
+          </div>
+        )}
 
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">

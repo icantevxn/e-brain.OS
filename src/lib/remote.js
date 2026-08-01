@@ -95,6 +95,20 @@ export async function fetchArchive() {
   return request("/api/archive", { method: "GET" });
 }
 
+/**
+ * Turn a URL into a draft object.
+ *
+ * Always resolves with a draft — a page that can't be read comes back with
+ * empty fields and `meta.blocked` explaining why, rather than as an error. The
+ * user can finish it by hand either way.
+ */
+export async function captureUrl(url) {
+  return request("/api/capture", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
+}
+
 /** Returns the new version. Throws ConflictError if `version` was stale. */
 export async function pushArchive(version, worlds) {
   const body = await request("/api/archive", {
