@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useArchive } from "@/ArchiveContext";
 import { fmt, hexId } from "@/lib/format";
 import { statusOf } from "@/lib/status";
-import { typeOf } from "@/lib/types";
+import { typeOf } from "@/lib/universes";
 import { findWorld, findItem, itemPath, worldPath, INBOX_WORLD_ID } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 

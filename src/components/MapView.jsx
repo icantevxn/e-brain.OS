@@ -9,7 +9,7 @@ import { useArchive } from "@/ArchiveContext";
 import { realWorlds } from "@/lib/inbox";
 import { worldPath, universeOf, universePath } from "@/lib/slug";
 import { worldTiles } from "@/lib/covers";
-import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/types";
+import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/universes";
 import { cn } from "@/lib/utils";
 
 /**

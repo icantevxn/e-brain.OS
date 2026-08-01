@@ -11,7 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useArchive } from "@/ArchiveContext";
 import { fmt } from "@/lib/format";
 import { STATUS_KEYS } from "@/lib/status";
-import { typeOf } from "@/lib/types";
+import { typeOf } from "@/lib/universes";
 import { findWorld, itemPath, worldPath, INBOX_WORLD_ID } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 

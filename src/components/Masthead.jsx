@@ -4,7 +4,7 @@ import ArchiveActions from "@/components/ArchiveActions";
 import { useArchive } from "@/ArchiveContext";
 import { realWorlds } from "@/lib/inbox";
 import { findWorld, findItem, worldPath, universePath, INBOX_WORLD_ID } from "@/lib/slug";
-import { WORLD_TYPES } from "@/lib/types";
+import { WORLD_TYPES } from "@/lib/universes";
 
 /**
  * One bar: where you are, and what you can do to the archive as a whole.

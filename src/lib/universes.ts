@@ -1,19 +1,42 @@
+import type { StatusKey, UniverseKey, World } from "@/types";
+
 /* ═══════════════════════════════════════════════
-   types.js — what kind of thing a world collects.
+   universes.ts — what kind of thing a world collects.
 
-   A world's type never changes what is stored on its items, only how those
+   (Was lib/types.js. Renamed when TypeScript landed: "types" now means
+   something else, and this file was always about universes.)
+
+   A world's universe never changes what is stored on its items, only how those
    fields are labelled. The item still persists `brand` and the status still
-   persists `owned` / `wishlist` / `hunting`; a film world simply renders
-   `brand` as "Director" and `owned` as "Seen". That keeps every existing
-   archive readable and means switching a world's type is non-destructive.
+   persists owned/wishlist/hunting; a film world simply renders `brand` as
+   "Director" and `owned` as "Seen". That keeps every existing archive readable
+   and means re-typing a world is non-destructive.
 
-   The three statuses map to one shape across every type:
+   The three statuses map to one shape across every universe:
      owned    — you have it / have done it
      wishlist — you want to
      hunting  — you are actively seeking it out
 ═══════════════════════════════════════════════ */
 
-export const WORLD_TYPES = {
+export interface Universe {
+  label: string;
+  /** Anchors the generated cover colour, so a universe reads as a family. */
+  hue: number;
+  /** What the `brand` field is called here. */
+  creator: string;
+  creatorPlaceholder: string;
+  itemNoun: string;
+  itemPlural: string;
+  namePlaceholder: string;
+  /** Money is only offered where it means something. */
+  showPrice: boolean;
+  text: string;
+  bg: string;
+  border: string;
+  status: Record<StatusKey, string>;
+}
+
+export const WORLD_TYPES: Record<UniverseKey, Universe> = {
   fashion: {
     label: "Fashion",
     hue: 20,
@@ -87,7 +110,7 @@ export const WORLD_TYPES = {
   spaces: {
     label: "Spaces",
     hue: 205,
-    // Architecture and interior design share a category: the same eye reads
+    // Architecture and interior design share a universe: the same eye reads
     // both, and splitting them would strand half of every project.
     creator: "Studio",
     creatorPlaceholder: "SANAA",
@@ -116,17 +139,16 @@ export const WORLD_TYPES = {
   },
 };
 
-export const TYPE_KEYS = Object.keys(WORLD_TYPES);
+export const TYPE_KEYS = Object.keys(WORLD_TYPES) as UniverseKey[];
 
-/** Worlds written before types existed are fashion — that is where this started. */
-export const DEFAULT_TYPE = "fashion";
+/** Worlds written before universes existed are fashion — that is where this started. */
+export const DEFAULT_TYPE: UniverseKey = "fashion";
 
-export const typeOf = (world) =>
-  WORLD_TYPES[world?.type] || WORLD_TYPES[DEFAULT_TYPE];
+export const typeOf = (world: World | null | undefined): Universe =>
+  WORLD_TYPES[world?.type as UniverseKey] || WORLD_TYPES[DEFAULT_TYPE];
 
-/** Display label for a stored status key, in the vocabulary of this type. */
-export const statusLabel = (world, statusKey) =>
+/** Display label for a stored status key, in the vocabulary of this universe. */
+export const statusLabel = (world: World | null | undefined, statusKey: StatusKey): string =>
   typeOf(world).status[statusKey] || WORLD_TYPES[DEFAULT_TYPE].status[statusKey];
 
-/** Title-case a noun for use at the start of a sentence or button. */
-export const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+export const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

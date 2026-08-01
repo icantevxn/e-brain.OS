@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { STATUS } from "@/lib/status";
-import { typeOf, capitalize } from "@/lib/types";
+import { typeOf, capitalize } from "@/lib/universes";
 import { captureUrl } from "@/lib/remote";
 import { nameTaken } from "@/lib/slug";
 import { moveTargets } from "@/lib/inbox";

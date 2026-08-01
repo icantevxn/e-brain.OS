@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/types";
+import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/universes";
 import { nameTaken } from "@/lib/slug";
 import { useArchive } from "@/ArchiveContext";
 import { cn } from "@/lib/utils";
