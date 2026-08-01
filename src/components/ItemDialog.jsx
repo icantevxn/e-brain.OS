@@ -19,9 +19,10 @@ import { cn } from "@/lib/utils";
 
 const monoLabel = "font-mono text-[10px] uppercase tracking-[0.18em]";
 
-export default function ItemDialog({ modal, world, onSave, onDelete, onClose }) {
+export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete, onClose }) {
   const it = modal.item || {};
   const t = typeOf(world);
+  const [moveTo, setMoveTo] = useState(world?.id || "");
   const [name, setName] = useState(it.name || "");
   const [brand, setBrand] = useState(it.brand || "");
   const [price, setPrice] = useState(it.price || "");
@@ -88,6 +89,7 @@ export default function ItemDialog({ modal, world, onSave, onDelete, onClose }) 
       status,
       image: image.trim(),
       notes: notes.trim(),
+      moveTo,
     });
   };
 
@@ -233,6 +235,33 @@ export default function ItemDialog({ modal, world, onSave, onDelete, onClose }) 
               placeholder="https://…"
             />
           </div>
+
+          {/* Triage. This is how a capture leaves the Inbox, so it only shows
+              when there is somewhere else to send it. */}
+          {worlds.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="item-world" className={monoLabel}>
+                World
+              </Label>
+              <select
+                id="item-world"
+                value={moveTo}
+                onChange={(e) => setMoveTo(e.target.value)}
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                {worlds.map((w) => (
+                  <option key={w.id} value={w.id} className="bg-background">
+                    {w.name}
+                  </option>
+                ))}
+              </select>
+              {moveTo !== world?.id && (
+                <p className={cn(monoLabel, "text-hunting")}>
+                  Will move out of {world?.name}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="item-notes" className={monoLabel}>

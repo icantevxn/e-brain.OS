@@ -61,20 +61,43 @@ export default function EBrainOS() {
     if (activeId === id) setActiveId(null);
   };
 
-  const saveItem = (data) => {
-    setWorlds(
-      worlds.map((w) => {
-        if (w.id !== activeId) return w;
-        if (itemModal.mode === "new")
-          return { ...w, items: [{ id: uid(), added: today(), ...data }, ...w.items] };
-        return {
-          ...w,
-          items: w.items.map((it) =>
-            it.id === itemModal.item.id ? { ...it, ...data } : it
-          ),
-        };
-      })
-    );
+  /**
+   * `moveTo` is the target world. It differs from the current one only when the
+   * dialog's world selector was changed — which is how captures get triaged out
+   * of the Inbox.
+   */
+  const saveItem = ({ moveTo, ...data }) => {
+    const targetId = moveTo || activeId;
+
+    setWorlds((prev) => {
+      if (itemModal.mode === "new") {
+        return prev.map((w) =>
+          w.id === targetId
+            ? { ...w, items: [{ id: uid(), added: today(), ...data }, ...w.items] }
+            : w
+        );
+      }
+
+      const updated = { ...itemModal.item, ...data };
+
+      // A move is a delete and an insert; doing both in one pass keeps the
+      // item from ever existing in two worlds or none.
+      if (targetId !== activeId) {
+        return prev.map((w) => {
+          if (w.id === activeId)
+            return { ...w, items: w.items.filter((i) => i.id !== updated.id) };
+          if (w.id === targetId) return { ...w, items: [updated, ...w.items] };
+          return w;
+        });
+      }
+
+      return prev.map((w) =>
+        w.id === activeId
+          ? { ...w, items: w.items.map((i) => (i.id === updated.id ? updated : i)) }
+          : w
+      );
+    });
+
     setItemModal(null);
   };
 
@@ -150,6 +173,7 @@ export default function EBrainOS() {
           key={itemModal.item?.id ?? "new"}
           modal={itemModal}
           world={active}
+          worlds={worlds}
           onSave={saveItem}
           onDelete={deleteItem}
           onClose={() => setItemModal(null)}

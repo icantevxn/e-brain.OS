@@ -1,6 +1,7 @@
 import { fetchPage, extractMetadata, pageText, assertSafeUrl } from "./_lib/scrape.js";
 import { enrich, needsEnrichment, isConfigured } from "./_lib/enrich.js";
 import { hasValidSession, hasValidCaptureToken } from "./_lib/auth.js";
+import { fileToInbox } from "./_lib/inbox.js";
 
 /* ═══════════════════════════════════════════════
    /api/capture — a URL in, a draft object out.
@@ -32,15 +33,37 @@ function draft(fields = {}) {
   };
 }
 
+/**
+ * A bookmarklet posts from whatever page you're on, so this endpoint is
+ * genuinely cross-origin. Allowing any origin is safe here because the bearer
+ * token is the credential — cookies are never accepted cross-origin, since
+ * `Allow-Credentials` is deliberately absent.
+ */
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
+}
+
 export default async function handler(req, res) {
+  setCors(res);
+
+  // A JSON POST with an Authorization header triggers a preflight.
+  if (req.method === "OPTIONS") return res.status(204).end();
+
   if (!hasValidSession(req) && !hasValidCaptureToken(req)) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
+    res.setHeader("Allow", "POST, OPTIONS");
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  // ?save=1 files the draft straight into the Inbox. Used by the bookmarklet
+  // and the Shortcut, which have no dialog to hand it back to.
+  const save = /[?&]save=1(&|$)/.test(req.url || "");
 
   const { url, html: suppliedHtml } = req.body ?? {};
 
@@ -63,9 +86,28 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: err.message });
   }
 
+  /**
+   * Respond, filing to the Inbox first when ?save=1.
+   *
+   * A blocked page is still filed rather than dropped: a stub carrying the link
+   * is worth more than a capture that silently vanished, because you can open
+   * it later and finish it by hand.
+   */
+  async function finish(fields, meta) {
+    const body = { fields: draft(fields), meta };
+    if (!save) return res.status(200).json(body);
+
+    const filed = await fileToInbox(body.fields);
+    return res.status(filed.ok ? 200 : 503).json({
+      ...body,
+      saved: filed.ok,
+      itemId: filed.item?.id ?? null,
+      ...(filed.ok ? {} : { error: "Archive was busy — try again" }),
+    });
+  }
+
   let html = suppliedHtml || null;
   let finalUrl = safeUrl;
-  let blocked = null;
 
   if (!html) {
     try {
@@ -74,16 +116,16 @@ export default async function handler(req, res) {
       finalUrl = page.finalUrl;
     } catch (err) {
       // A page we can't read isn't an error the user should have to act on —
-      // hand back an empty draft with the URL so they can fill it in by hand.
-      return res.status(200).json({
-        fields: draft(),
-        meta: {
+      // hand back an empty draft carrying the URL so it can be finished by hand.
+      return finish(
+        { name: safeUrl, notes: `Couldn't read this page: ${err.message}` },
+        {
           url: safeUrl,
           blocked: err.message,
           enriched: false,
           gaps: ["name", "brand", "price", "image"],
-        },
-      });
+        }
+      );
     }
   }
 
@@ -92,10 +134,10 @@ export default async function handler(req, res) {
     extracted = extractMetadata(html, finalUrl);
   } catch (err) {
     console.error("[e-brain.os] extraction failed", err?.message || err);
-    return res.status(200).json({
-      fields: draft(),
-      meta: { url: safeUrl, blocked: "Could not read that page", enriched: false, gaps: [] },
-    });
+    return finish(
+      { name: safeUrl, notes: "Couldn't read this page" },
+      { url: safeUrl, blocked: "Could not read that page", enriched: false, gaps: [] }
+    );
   }
 
   const { fields: scraped, gaps, siteName } = extracted;
@@ -120,17 +162,19 @@ export default async function handler(req, res) {
     enrichReason = "no-api-key";
   }
 
-  return res.status(200).json({
-    fields: draft(fields),
-    meta: {
+  return finish(
+    // Keep the source link on anything filed unattended — without the dialog in
+    // front of you, the URL is often the only way back to what you saw.
+    save && !fields.notes ? { ...fields, notes: safeUrl } : fields,
+    {
       url: safeUrl,
       finalUrl,
       siteName: siteName || "",
       gaps,
       enriched,
       enrichReason,
-      blocked,
+      blocked: null,
       suppliedHtml: Boolean(suppliedHtml),
-    },
-  });
+    }
+  );
 }
