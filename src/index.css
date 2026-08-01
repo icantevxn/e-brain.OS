@@ -1,0 +1,170 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ═══════════════════════════════════════════════
+   e-brain.OS — editorial theme
+
+   Dark-only by design. The app has one look: warm near-black ground,
+   paper-white type, a display serif carrying the headlines and Space Mono
+   carrying the data. No light theme, so the dark values live on :root
+   directly rather than behind a .dark selector.
+═══════════════════════════════════════════════ */
+
+:root {
+  --radius: 0.25rem;
+
+  /* Ground and paper. Both carry a faint warm tint — a truly neutral
+     black/white pair reads clinical, which is the opposite of the brief. */
+  --background: oklch(0.145 0.004 70);
+  --foreground: oklch(0.95 0.012 85);
+
+  --card: oklch(0.185 0.004 70);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.185 0.004 70);
+  --popover-foreground: var(--foreground);
+
+  /* Primary is paper-on-ground: buttons invert rather than colour up. */
+  --primary: oklch(0.95 0.012 85);
+  --primary-foreground: oklch(0.145 0.004 70);
+
+  --secondary: oklch(0.24 0.004 70);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.24 0.004 70);
+  --muted-foreground: oklch(0.66 0.008 80);
+  --accent: oklch(0.26 0.004 70);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.62 0.22 27);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.3 0.004 70);
+  --input: oklch(0.3 0.004 70);
+  --ring: oklch(0.7 0.09 30);
+
+  /* Status palette, carried over from the original build and warmed.
+     owned / wishlist / hunting map 1:1 to the item status field. */
+  --owned: oklch(0.83 0.14 155);
+  --wishlist: oklch(0.7 0.15 268);
+  --hunting: oklch(0.78 0.09 30);
+
+  /* One accent per world type. Spread around the hue wheel at a common
+     lightness/chroma so no type shouts louder than another on the map. */
+  --fashion: oklch(0.8 0.11 20);
+  --books: oklch(0.8 0.1 85);
+  --film: oklch(0.72 0.13 265);
+  --music: oklch(0.8 0.13 155);
+  --food: oklch(0.79 0.13 55);
+  --spaces: oklch(0.78 0.11 205);
+  --subculture: oklch(0.74 0.14 320);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-owned: var(--owned);
+  --color-wishlist: var(--wishlist);
+  --color-hunting: var(--hunting);
+
+  --color-fashion: var(--fashion);
+  --color-books: var(--books);
+  --color-film: var(--film);
+  --color-music: var(--music);
+  --color-food: var(--food);
+  --color-spaces: var(--spaces);
+  --color-subculture: var(--subculture);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  --font-display: "Instrument Serif", "Times New Roman", serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial,
+    sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* dvh keeps the shell honest on mobile, where 100vh sits under the
+     browser chrome. */
+  #root {
+    height: 100dvh;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* The dome and the wheel are both drag surfaces — a text selection
+     flickering in mid-drag ruins the illusion. */
+  .fos-nodrag {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* ═══════ atmosphere ═══════
+   The original build layered scanlines, noise and a vignette. Only the
+   grain survives: at this opacity it stops the flat black from banding on
+   wide gradients without reading as a CRT effect. */
+.fos-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes fosRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fos-rise {
+  animation: fosRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fos-rise {
+    animation: none;
+  }
+}
