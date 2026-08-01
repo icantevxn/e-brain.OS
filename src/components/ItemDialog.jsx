@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { STATUS } from "@/lib/status";
 import { typeOf, capitalize } from "@/lib/types";
 import { captureUrl } from "@/lib/remote";
+import { nameTaken } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
 const monoLabel = "font-mono text-[10px] uppercase tracking-[0.18em]";
@@ -35,7 +36,12 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
   const [captureNote, setCaptureNote] = useState(null);
 
   const isNew = modal.mode === "new";
-  const valid = name.trim().length > 0;
+
+  // Checked against the world it's going *to*, not the one it's in — moving a
+  // piece into a world that already has one by that name is the same clash.
+  const targetWorld = worlds.find((w) => w.id === moveTo) || world;
+  const duplicate = nameTaken(targetWorld?.items || [], name, it.id ?? null);
+  const valid = name.trim().length > 0 && !duplicate;
 
   /**
    * Pull what the page says about itself and fill the blanks.
@@ -166,7 +172,13 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
               autoFocus
               onChange={(e) => setName(e.target.value)}
               placeholder={t.namePlaceholder}
+              aria-invalid={duplicate || undefined}
             />
+            {duplicate && (
+              <p role="alert" className="font-mono text-[9px] uppercase tracking-[0.15em] text-destructive">
+                {targetWorld?.name} already has “{name.trim()}”
+              </p>
+            )}
           </div>
 
           <div className="flex gap-3">

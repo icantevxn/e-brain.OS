@@ -44,7 +44,13 @@ function buildSnippet(origin, token) {
     })
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        toast(d.saved ? 'Filed to Inbox — ' + (d.fields.name || 'untitled') : (d.error || 'Could not file that'), !!d.saved);
+        var what = d.fields.name || 'untitled';
+        toast(
+          d.saved
+            ? (d.duplicate ? 'Already in your Inbox — ' + what : 'Filed to Inbox — ' + what)
+            : (d.error || 'Could not file that'),
+          !!d.saved
+        );
       })
       .catch(function (e) { toast('Failed: ' + e.message, false); });
   `;

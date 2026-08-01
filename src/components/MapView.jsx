@@ -5,6 +5,7 @@ import DomeGallery from "@/components/vendor/DomeGallery";
 import WorldDialog from "@/components/WorldDialog";
 import { Button } from "@/components/ui/button";
 import { useArchive } from "@/ArchiveContext";
+import { worldPath } from "@/lib/slug";
 import { worldTiles } from "@/lib/covers";
 import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,10 @@ export default function MapView() {
   const [active, setActive] = useState(() => new Set());
   const [newWorld, setNewWorld] = useState(false);
 
-  const onEnter = (id) => navigate(`/w/${id}`);
+  const onEnter = (id) => {
+    const world = worlds.find((w) => w.id === id);
+    if (world) navigate(worldPath(world));
+  };
   const onNewWorld = () => setNewWorld(true);
 
   const counts = useMemo(() => {
@@ -66,7 +70,7 @@ export default function MapView() {
         const world = createWorld(data);
         setNewWorld(false);
         // Straight into the new world — you made it to put something in it.
-        navigate(`/w/${world.id}`);
+        navigate(worldPath(world));
       }}
       onClose={() => setNewWorld(false)}
     />

@@ -7,6 +7,7 @@ import { useArchive } from "@/ArchiveContext";
 import { fmt, hexId } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { typeOf } from "@/lib/types";
+import { findWorld, findItem, itemPath, worldPath } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
 /** A URL sitting in the notes is the source link the capture kept. */
@@ -27,12 +28,17 @@ export default function ObjectView() {
   const [editing, setEditing] = useState(false);
   const [broken, setBroken] = useState(false);
 
-  const world = worlds.find((w) => w.id === worldId);
-  const item = world?.items.find((i) => i.id === itemId);
+  const world = findWorld(worlds, worldId);
+  const item = findItem(world, itemId);
 
   useEffect(() => setBroken(false), [item?.image]);
 
-  if (!world || !item) return <Navigate to={world ? `/w/${worldId}` : "/"} replace />;
+  if (!world) return <Navigate to="/" replace />;
+  if (!item) return <Navigate to={worldPath(world)} replace />;
+
+  // Reached by id or a pre-rename slug — normalise the address.
+  const canonical = itemPath(world, item);
+  if (`/w/${worldId}/${itemId}` !== canonical) return <Navigate to={canonical} replace />;
 
   const t = typeOf(world);
   const st = statusOf(item);
@@ -44,7 +50,7 @@ export default function ObjectView() {
     <div className="min-h-0 flex-1 overflow-y-auto">
       <article className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8 sm:py-10 fos-rise">
         <Link
-          to={`/w/${world.id}`}
+          to={worldPath(world)}
           className="mb-6 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-3.5" />
@@ -129,12 +135,14 @@ export default function ObjectView() {
           onSave={(data) => {
             const target = updateItem(world.id, item.id, data);
             setEditing(false);
-            // A move changes the object's address, so follow it there.
-            if (target !== world.id) navigate(`/w/${target}/${item.id}`, { replace: true });
+            // Renaming or moving changes the address, so follow it there rather
+            // than leaving the bar pointing at a slug that no longer resolves.
+            const nextWorld = worlds.find((w) => w.id === target) || world;
+            navigate(itemPath(nextWorld, { ...item, ...data }), { replace: true });
           }}
           onDelete={() => {
             removeItem(world.id, item.id);
-            navigate(`/w/${world.id}`, { replace: true });
+            navigate(worldPath(world), { replace: true });
           }}
           onClose={() => setEditing(false)}
         />

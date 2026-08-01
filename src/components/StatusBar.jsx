@@ -1,5 +1,6 @@
 import { useMatch } from "react-router-dom";
 import { useArchive } from "@/ArchiveContext";
+import { findWorld } from "@/lib/slug";
 import { hexId } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,7 @@ export default function StatusBar() {
   const worldMatch = useMatch("/w/:worldId");
   const match = objectMatch || worldMatch;
 
-  const active = match ? worlds.find((w) => w.id === match.params.worldId) : null;
+  const active = match ? findWorld(worlds, match.params.worldId) : null;
   // Blocked localStorage used to mean "nothing persists". It no longer does —
   // the server holds the archive and the cache is only a paint accelerator — so
   // the sync status is the honest thing to show.

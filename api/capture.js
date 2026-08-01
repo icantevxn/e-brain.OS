@@ -101,6 +101,7 @@ export default async function handler(req, res) {
     return res.status(filed.ok ? 200 : 503).json({
       ...body,
       saved: filed.ok,
+      duplicate: Boolean(filed.duplicate),
       itemId: filed.item?.id ?? null,
       ...(filed.ok ? {} : { error: "Archive was busy — try again" }),
     });

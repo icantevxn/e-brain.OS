@@ -12,16 +12,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/types";
+import { nameTaken } from "@/lib/slug";
+import { useArchive } from "@/ArchiveContext";
 import { cn } from "@/lib/utils";
 
 export default function WorldDialog({ modal, onSave, onDelete, onClose }) {
+  const { worlds } = useArchive();
   const world = modal.world || {};
   const [name, setName] = useState(world.name || "");
   const [cover, setCover] = useState(world.cover || "");
   const [type, setType] = useState(world.type || DEFAULT_TYPE);
 
   const isNew = modal.mode === "new";
-  const valid = name.trim().length > 0;
+
+  // Two worlds with the same name are indistinguishable in the breadcrumb and
+  // would fight over the same slug. `exceptId` lets a world keep its own name
+  // while you edit something else about it.
+  const duplicate = nameTaken(worlds, name, world.id ?? null);
+  const valid = name.trim().length > 0 && !duplicate;
 
   const submit = (e) => {
     e.preventDefault();
@@ -52,7 +60,13 @@ export default function WorldDialog({ modal, onSave, onDelete, onClose }) {
               autoFocus
               onChange={(e) => setName(e.target.value)}
               placeholder="Archive Prada"
+              aria-invalid={duplicate || undefined}
             />
+            {duplicate && (
+              <p role="alert" className="font-mono text-[9px] uppercase tracking-[0.15em] text-destructive">
+                A world called “{name.trim()}” already exists
+              </p>
+            )}
           </div>
 
           <fieldset>

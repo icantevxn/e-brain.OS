@@ -10,6 +10,7 @@ import { useArchive } from "@/ArchiveContext";
 import { fmt } from "@/lib/format";
 import { STATUS_KEYS } from "@/lib/status";
 import { typeOf } from "@/lib/types";
+import { findWorld, worldSlug, itemPath, worldPath } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,10 +30,14 @@ export default function WorldView() {
   const [worldModal, setWorldModal] = useState(false);
   const [newItem, setNewItem] = useState(false);
 
-  const world = worlds.find((w) => w.id === worldId);
+  const world = findWorld(worlds, worldId);
 
   // A deleted world, or a stale bookmark. Home beats a blank screen.
   if (!world) return <Navigate to="/" replace />;
+
+  // Reached by id (an old link, or one saved before a rename) — send it to the
+  // readable address so what's in the bar matches what's on screen.
+  if (worldId !== worldSlug(world)) return <Navigate to={worldPath(world)} replace />;
 
   const t = typeOf(world);
   const filters = [
@@ -132,7 +137,7 @@ export default function WorldView() {
               // cmd-click and long-press-to-open behave as expected.
               <Link
                 key={it.id}
-                to={`/w/${world.id}/${it.id}`}
+                to={itemPath(world, it)}
                 className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ObjectCard item={it} type={t} />

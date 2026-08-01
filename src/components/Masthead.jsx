@@ -2,6 +2,7 @@ import { Link, useMatch } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import ArchiveActions from "@/components/ArchiveActions";
 import { useArchive } from "@/ArchiveContext";
+import { findWorld, findItem, worldPath } from "@/lib/slug";
 
 /**
  * One bar: where you are, and what you can do to the archive as a whole.
@@ -20,11 +21,8 @@ export default function Masthead() {
   const inObject = useMatch("/w/:worldId/:itemId");
   const match = inObject || inWorld;
 
-  const world = match ? worlds.find((w) => w.id === match.params.worldId) : null;
-  const item =
-    inObject && world
-      ? world.items.find((i) => i.id === inObject.params.itemId)
-      : null;
+  const world = match ? findWorld(worlds, match.params.worldId) : null;
+  const item = inObject ? findItem(world, inObject.params.itemId) : null;
 
   return (
     <header className="flex shrink-0 items-center gap-2 border-b px-5 py-3 sm:px-8">
@@ -38,7 +36,7 @@ export default function Masthead() {
       {world && (
         <>
           <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-          <Crumb to={`/w/${world.id}`} current={!item}>
+          <Crumb to={worldPath(world)} current={!item}>
             {world.name}
           </Crumb>
         </>

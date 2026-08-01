@@ -28,6 +28,8 @@ const today = () => {
  * the same moment would be a bad trade. Each attempt re-reads, so the retry
  * appends to the newest archive rather than resurrecting an old one.
  */
+const normalize = (s) => String(s || "").trim().toLowerCase();
+
 export async function fileToInbox(fields, { attempts = 3 } = {}) {
   try {
     return await attemptFile(fields, attempts);
@@ -61,6 +63,14 @@ async function attemptFile(fields, attempts) {
     if (idx === -1) {
       worlds.unshift({ id: INBOX_ID, name: INBOX_NAME, type: "fashion", items: [item] });
     } else {
+      // Clicking the bookmarklet twice on the same page is easy to do and
+      // shouldn't leave two identical entries to clean up. Matched on name,
+      // which for a capture is the page title.
+      const existing = worlds[idx].items.find(
+        (i) => normalize(i.name) === normalize(item.name)
+      );
+      if (existing) return { ok: true, item: existing, duplicate: true };
+
       worlds[idx] = { ...worlds[idx], items: [item, ...worlds[idx].items] };
     }
 
