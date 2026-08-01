@@ -15,7 +15,15 @@ import { uid, today } from "@/lib/format";
 
 const ArchiveContext = createContext(null);
 
-export function ArchiveProvider({ worlds, setWorlds, saveStatus, children }) {
+export function ArchiveProvider({
+  worlds,
+  setWorlds,
+  saveStatus,
+  canEdit = false,
+  signIn,
+  signOut,
+  children,
+}) {
   const value = useMemo(() => {
     const createWorld = (data) => {
       const world = { id: uid(), items: [], ...data };
@@ -82,6 +90,11 @@ export function ArchiveProvider({ worlds, setWorlds, saveStatus, children }) {
       worlds,
       setWorlds,
       saveStatus,
+      // What to *show*. The real gate is the session check on PUT /api/archive —
+      // hiding a button has never stopped anyone calling the endpoint.
+      canEdit,
+      signIn,
+      signOut,
       createWorld,
       updateWorld,
       removeWorld,
@@ -89,7 +102,7 @@ export function ArchiveProvider({ worlds, setWorlds, saveStatus, children }) {
       updateItem,
       removeItem,
     };
-  }, [worlds, setWorlds, saveStatus]);
+  }, [worlds, setWorlds, saveStatus, canEdit, signIn, signOut]);
 
   return <ArchiveContext.Provider value={value}>{children}</ArchiveContext.Provider>;
 }

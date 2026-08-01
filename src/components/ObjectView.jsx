@@ -26,7 +26,7 @@ export default function ObjectView({ inbox = false }) {
   const { universe, worldId: routeWorldId, itemId } = useParams();
   const worldId = inbox ? INBOX_WORLD_ID : routeWorldId;
   const navigate = useNavigate();
-  const { worlds, updateItem, removeItem } = useArchive();
+  const { worlds, canEdit, updateItem, removeItem } = useArchive();
 
   const [editing, setEditing] = useState(false);
   const [broken, setBroken] = useState(false);
@@ -97,6 +97,7 @@ export default function ObjectView({ inbox = false }) {
           </div>
           {/* Delete used to live inside the edit dialog, two steps from here.
               It's a first-class action, so it sits beside Edit. */}
+          {canEdit && (
           <div className="flex shrink-0 items-center gap-2">
             <Button
               variant="outline"
@@ -124,6 +125,7 @@ export default function ObjectView({ inbox = false }) {
               }}
             />
           </div>
+          )}
         </div>
 
         <dl className="mt-6 grid grid-cols-2 gap-px border bg-border sm:grid-cols-3">

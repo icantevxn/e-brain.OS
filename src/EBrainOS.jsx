@@ -31,26 +31,20 @@ import seed from "@/data/seed.json";
 const SEED_WORLDS = seed.worlds;
 
 export default function EBrainOS() {
-  const { worlds, setWorlds, saveStatus, auth, signIn } = useSyncedState(SEED_WORLDS);
+  const { worlds, setWorlds, saveStatus, role, canEdit, signIn, signOut } =
+    useSyncedState(SEED_WORLDS);
 
-  // Every hook above runs unconditionally; these gates sit below them so the
-  // hook order never changes between renders.
-  if (auth === "checking") {
-    // Blank rather than a spinner: the check is a single fast request, and a
-    // flash of loading UI is worse than a beat of empty ground.
-    return <div className="h-full bg-background" />;
-  }
-
-  if (auth === "unauthenticated") {
-    return (
-      <div className="relative h-full overflow-hidden bg-background fos-grain">
-        <Login onSubmit={signIn} />
-      </div>
-    );
-  }
-
+  // No login gate any more: the archive is public to read, so a visitor lands
+  // straight on it. Signing in is an action you take, not a wall you pass.
   return (
-    <ArchiveProvider worlds={worlds} setWorlds={setWorlds} saveStatus={saveStatus}>
+    <ArchiveProvider
+      worlds={worlds}
+      setWorlds={setWorlds}
+      saveStatus={saveStatus}
+      canEdit={canEdit}
+      signIn={signIn}
+      signOut={signOut}
+    >
       <div className="relative flex h-full flex-col overflow-hidden bg-background fos-grain">
         <Masthead />
 
@@ -67,6 +61,15 @@ export default function EBrainOS() {
                 swallowed by it. */}
             <Route path="/in-orbit" element={<WorldView inbox />} />
             <Route path="/in-orbit/:itemId" element={<ObjectView inbox />} />
+
+            {/* Signing in is a page you visit, not a wall in front of the app.
+                Already signed in? Nothing to do here. */}
+            <Route
+              path="/sign-in"
+              element={
+                canEdit ? <Navigate to="/" replace /> : <Login onSubmit={signIn} />
+              }
+            />
 
             <Route path="/:universe" element={<MapView />} />
             <Route path="/:universe/:worldId" element={<WorldView />} />

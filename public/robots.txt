@@ -1,0 +1,4 @@
+# The archive is public to read so it can be shared by link. That is not the
+# same as wanting it indexed — share it deliberately, don't be found by accident.
+User-agent: *
+Disallow: /

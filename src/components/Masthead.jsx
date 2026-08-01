@@ -15,7 +15,7 @@ import { WORLD_TYPES } from "@/lib/universes";
  * it was decoration, and this bar had three things competing for the same edge.
  */
 export default function Masthead() {
-  const { worlds } = useArchive();
+  const { worlds, canEdit, signOut } = useArchive();
   const filed = realWorlds(worlds);
 
   // useMatch rather than useParams: this sits outside <Routes>, so it has no
@@ -89,6 +89,24 @@ export default function Masthead() {
           {filed.reduce((sum, w) => sum + w.items.length, 0)} obj
         </span>
         <ArchiveActions />
+
+        {canEdit ? (
+          <button
+            type="button"
+            onClick={signOut}
+            title="Sign out"
+            className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Sign out
+          </button>
+        ) : (
+          <Link
+            to="/sign-in"
+            className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   );

@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
  */
 export default function MapView() {
   const navigate = useNavigate();
-  const { worlds: allWorlds, createWorld } = useArchive();
+  const { worlds: allWorlds, canEdit, createWorld } = useArchive();
 
   // In Orbit is a staging area, not a place on the map. Excluding it here keeps
   // it out of the dome, out of the universe counts, and out of the empty-archive
@@ -85,10 +85,12 @@ export default function MapView() {
         <p className="max-w-sm font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           A world is a mood you collect into — a label, a director, a cuisine, a scene
         </p>
+        {canEdit && (
         <Button onClick={onNewWorld} className="mt-2 font-mono text-[11px] uppercase tracking-[0.15em]">
           <Plus className="size-3.5" />
           Create first world
         </Button>
+        )}
         {/* Captures can arrive before any world exists — the shuttle is the
             only way to reach them until one does. */}
         <OrbitShuttle worlds={allWorlds} />
@@ -180,6 +182,7 @@ export default function MapView() {
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Drag to orbit — select a world to enter
           </p>
+          {canEdit && (
           <Button
             onClick={onNewWorld}
             variant="outline"
@@ -189,6 +192,7 @@ export default function MapView() {
             <Plus className="size-3.5" />
             New world
           </Button>
+          )}
         </div>
       </div>
 

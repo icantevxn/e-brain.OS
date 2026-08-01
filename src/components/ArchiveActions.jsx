@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
  * confirmation step in front of it.
  */
 export default function ArchiveActions() {
-  const { worlds, setWorlds: onImport } = useArchive();
+  const { worlds, setWorlds: onImport, canEdit } = useArchive();
   const fileRef = useRef(null);
   const [note, setNote] = useState(null);
 
@@ -70,15 +70,19 @@ export default function ArchiveActions() {
         <Download className="size-3.5" />
       </Button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Import archive from JSON"
-        aria-label="Import archive from JSON"
-        onClick={() => fileRef.current?.click()}
-      >
-        <Upload className="size-3.5" />
-      </Button>
+      {/* Export stays open — the archive is public, so a visitor taking a copy
+          takes nothing they couldn't already read. Import writes, so it doesn't. */}
+      {canEdit && (
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Import archive from JSON"
+          aria-label="Import archive from JSON"
+          onClick={() => fileRef.current?.click()}
+        >
+          <Upload className="size-3.5" />
+        </Button>
+      )}
 
       <input
         ref={fileRef}

@@ -29,7 +29,7 @@ export default function WorldView({ inbox = false }) {
   // shape rather than a slug in the path.
   const worldId = inbox ? INBOX_WORLD_ID : routeWorldId;
   const navigate = useNavigate();
-  const { worlds, updateWorld, removeWorld, addItem, updateItem, removeItem } =
+  const { worlds, canEdit, updateWorld, removeWorld, addItem, updateItem, removeItem } =
     useArchive();
 
   const [filter, setFilter] = useState("all");
@@ -90,6 +90,7 @@ export default function WorldView({ inbox = false }) {
           </span>
         )}
 
+        {canEdit && (
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant="ghost"
@@ -109,6 +110,7 @@ export default function WorldView({ inbox = false }) {
             Add {t.itemNoun}
           </Button>
         </div>
+        )}
       </div>
 
       {/* One row instead of two: with the view toggle gone, the counts and the
@@ -146,6 +148,7 @@ export default function WorldView({ inbox = false }) {
 
       {items.length === 0 ? (
         <Empty
+          canEdit={canEdit}
           filtered={filter !== "all"}
           noun={t.itemNoun}
           plural={t.itemPlural}
@@ -167,6 +170,7 @@ export default function WorldView({ inbox = false }) {
 
                 {/* Always present on touch, where there is no hover to reveal
                     them; fading in on pointer devices keeps the grid clean. */}
+                {canEdit && (
                 <div className="absolute right-2 top-2 flex gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/card:opacity-100 sm:group-focus-within/card:opacity-100">
                   <button
                     type="button"
@@ -185,6 +189,7 @@ export default function WorldView({ inbox = false }) {
                   />
                   <DeleteButton compact onDelete={() => removeItem(world.id, it.id)} />
                 </div>
+                )}
               </div>
             ))}
           </div>
@@ -240,7 +245,7 @@ export default function WorldView({ inbox = false }) {
   );
 }
 
-function Empty({ filtered, noun, plural, onAdd }) {
+function Empty({ canEdit, filtered, noun, plural, onAdd }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
       <h3 className="font-display text-3xl sm:text-4xl">
@@ -249,7 +254,7 @@ function Empty({ filtered, noun, plural, onAdd }) {
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
         {filtered ? "Try another filter" : `Add the first ${noun} to begin tracking`}
       </p>
-      {!filtered && (
+      {!filtered && canEdit && (
         <Button
           onClick={onAdd}
           variant="outline"

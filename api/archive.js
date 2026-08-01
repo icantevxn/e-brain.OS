@@ -34,18 +34,23 @@ function isWorldsArray(value) {
 }
 
 export default async function handler(req, res) {
-  if (!hasValidSession(req)) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
   try {
     if (req.method === "GET") {
+      // Reading is public: the archive is meant to be shown. Writing is not —
+      // see the session check on PUT below. Hiding buttons in the client is not
+      // access control; this is.
+      res.setHeader("X-Robots-Tag", "noindex");
       const archive = await readArchive();
       if (!archive) return res.status(200).json({ version: 0, worlds: null });
       return res.status(200).json(archive);
     }
 
     if (req.method === "PUT") {
+      // The whole of the write side is behind this one check.
+      if (!hasValidSession(req)) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
       const { version, worlds } = req.body ?? {};
 
       if (!Number.isInteger(version) || version < 0) {
