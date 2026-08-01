@@ -1,4 +1,3 @@
-import { storageKind } from "@/storage.js";
 import { hexId } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -8,17 +7,21 @@ import { cn } from "@/lib/utils";
 const SAVE_READOUT = {
   idle: null,
   pending: { text: "Syncing", className: "text-muted-foreground" },
-  saved: { text: "Saved", className: "text-owned" },
+  saved: { text: "Synced", className: "text-owned" },
+  // Not an error: edits are held in the local cache and pushed on reconnect.
+  offline: { text: "Offline — changes held locally", className: "text-hunting" },
+  // Another device wrote first; the two archives were merged.
+  conflict: { text: "Merged changes from another device", className: "text-wishlist" },
   quota: { text: "Save failed — storage full", className: "text-destructive" },
   write: { text: "Save failed", className: "text-destructive" },
   serialize: { text: "Save failed", className: "text-destructive" },
 };
 
 export default function StatusBar({ worlds, active, saveStatus }) {
-  const readout =
-    storageKind === "memory"
-      ? { text: "Session only — storage blocked", className: "text-hunting" }
-      : SAVE_READOUT[saveStatus];
+  // Blocked localStorage used to mean "nothing persists". It no longer does —
+  // the server holds the archive and the cache is only a paint accelerator — so
+  // the sync status is the honest thing to show.
+  const readout = SAVE_READOUT[saveStatus];
 
   const index = active ? worlds.findIndex((w) => w.id === active.id) + 1 : 0;
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { STORAGE_KEY } from "./storage.js";
-import { usePersistentState } from "./usePersistentState.js";
+import { useSyncedState } from "./useSyncedState.js";
+import Login from "@/components/Login";
 import { uid, today } from "@/lib/format";
 import seed from "@/data/seed.json";
 import Masthead from "@/components/Masthead";
@@ -14,8 +14,8 @@ import ItemDialog from "@/components/ItemDialog";
    e-brain.OS — personal taste tracking system
 
    Orchestrator only: state, persistence and the handlers that mutate it.
-   Everything visual lives in @/components. Persists to localStorage via
-   usePersistentState; the stored schema is owned by storage.js.
+   Everything visual lives in @/components. The archive lives on the server via
+   useSyncedState; localStorage is a cache behind it, owned by storage.js.
 ═══════════════════════════════════════════════ */
 
 /**
@@ -28,7 +28,7 @@ import ItemDialog from "@/components/ItemDialog";
 const SEED_WORLDS = seed.worlds;
 
 export default function EBrainOS() {
-  const [worlds, setWorlds, saveStatus] = usePersistentState(STORAGE_KEY, SEED_WORLDS);
+  const { worlds, setWorlds, saveStatus, auth, signIn } = useSyncedState(SEED_WORLDS);
   const [activeId, setActiveId] = useState(null);
   const [filter, setFilter] = useState("all");
   const [worldModal, setWorldModal] = useState(null);
@@ -88,6 +88,22 @@ export default function EBrainOS() {
     );
     setItemModal(null);
   };
+
+  // Every hook above runs unconditionally; these gates sit below them so the
+  // hook order never changes between renders.
+  if (auth === "checking") {
+    // Blank rather than a spinner: the check is a single fast request, and a
+    // flash of loading UI is worse than a beat of empty ground.
+    return <div className="h-full bg-background" />;
+  }
+
+  if (auth === "unauthenticated") {
+    return (
+      <div className="relative h-full overflow-hidden bg-background fos-grain">
+        <Login onSubmit={signIn} />
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-background fos-grain">
