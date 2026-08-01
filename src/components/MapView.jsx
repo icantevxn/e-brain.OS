@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { useNavigate, useParams, Navigate, Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import DomeGallery from "@/components/vendor/DomeGallery";
 import WorldDialog from "@/components/WorldDialog";
 import { Button } from "@/components/ui/button";
 import { useArchive } from "@/ArchiveContext";
-import { worldPath } from "@/lib/slug";
+import { worldPath, universeOf, universePath } from "@/lib/slug";
 import { worldTiles } from "@/lib/covers";
 import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -23,9 +23,10 @@ export default function MapView() {
   const navigate = useNavigate();
   const { worlds, createWorld } = useArchive();
 
-  // Empty set means "everything". Multi-select, so you can hold film + music
-  // side by side without going back through an "All" step each time.
-  const [active, setActive] = useState(() => new Set());
+  // The universe comes from the URL, not from state: /fashion is the same dome
+  // narrowed, so it can be linked and bookmarked. That makes it single-select —
+  // one segment, one universe — where the chips used to allow several at once.
+  const { universe } = useParams();
   const [newWorld, setNewWorld] = useState(false);
 
   const onEnter = (id) => {
@@ -37,29 +38,18 @@ export default function MapView() {
   const counts = useMemo(() => {
     const tally = Object.fromEntries(Object.keys(WORLD_TYPES).map((k) => [k, 0]));
     for (const w of worlds) {
-      const key = w.type || DEFAULT_TYPE;
+      const key = universeOf(w);
       if (key in tally) tally[key] += 1;
     }
     return tally;
   }, [worlds]);
 
   const visible = useMemo(
-    () =>
-      active.size === 0
-        ? worlds
-        : worlds.filter((w) => active.has(w.type || DEFAULT_TYPE)),
-    [worlds, active]
+    () => (universe ? worlds.filter((w) => universeOf(w) === universe) : worlds),
+    [worlds, universe]
   );
 
   const tiles = useMemo(() => worldTiles(visible), [visible]);
-
-  const toggle = (key) =>
-    setActive((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
 
   // Rendered from both branches below; a brand-new archive needs it as much as
   // a populated one.
@@ -75,6 +65,9 @@ export default function MapView() {
       onClose={() => setNewWorld(false)}
     />
   );
+
+  // /nonsense is not a universe. Home beats an empty dome with no explanation.
+  if (universe && !(universe in WORLD_TYPES)) return <Navigate to="/" replace />;
 
   if (worlds.length === 0) {
     return (
@@ -100,7 +93,7 @@ export default function MapView() {
         <DomeGallery
           /* Remount when the visible set changes: the dome builds its tile
              grid once from the pool it was given. */
-          key={[...active].sort().join(",") || "all"}
+          key={universe || "all"}
           images={tiles}
           onItemClick={(meta) => meta?.worldId && onEnter(meta.worldId)}
           segments={24}
@@ -123,8 +116,8 @@ export default function MapView() {
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] flex flex-wrap items-center gap-2 px-5 pt-4 sm:px-8">
         <div className="pointer-events-auto flex flex-wrap items-center gap-1 rounded-full border border-border/70 bg-background/60 p-1 backdrop-blur-md">
           <Chip
-            active={active.size === 0}
-            onClick={() => setActive(new Set())}
+            to="/"
+            active={!universe}
             count={worlds.length}
             activeClassName="bg-foreground text-background"
             idleClassName="text-muted-foreground hover:bg-accent"
@@ -135,9 +128,9 @@ export default function MapView() {
           {Object.entries(WORLD_TYPES).map(([key, t]) => (
             <Chip
               key={key}
-              active={active.has(key)}
+              to={universePath(key)}
+              active={universe === key}
               disabled={counts[key] === 0}
-              onClick={() => toggle(key)}
               count={counts[key]}
               activeClassName={cn(t.bg, "text-background")}
               idleClassName={cn(t.text, "hover:bg-accent")}
@@ -147,16 +140,8 @@ export default function MapView() {
           ))}
         </div>
 
-        {active.size > 0 && (
-          <button
-            type="button"
-            onClick={() => setActive(new Set())}
-            className="pointer-events-auto flex items-center gap-1 rounded-full border border-border/70 bg-background/60 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground backdrop-blur-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <X className="size-3" />
-            Clear
-          </button>
-        )}
+        {/* No "Clear" any more — the All chip is the way back, and with the
+            universe in the URL, so is the back button. */}
       </div>
 
       {tiles.length === 0 && (
@@ -206,26 +191,40 @@ export default function MapView() {
  * One filter toggle. Types you own nothing in stay visible but disabled —
  * they show the shape of the archive without pretending to be reachable.
  */
-function Chip({ active, disabled, onClick, count, children, activeClassName, idleClassName }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      className={cn(
-        "flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.15em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        disabled
-          ? "cursor-not-allowed text-muted-foreground/60"
-          : active
-            ? activeClassName
-            : idleClassName
-      )}
-    >
+function Chip({ to, active, disabled, count, children, activeClassName, idleClassName }) {
+  const className = cn(
+    "flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.15em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+    disabled
+      ? "cursor-not-allowed text-muted-foreground/60"
+      : active
+        ? activeClassName
+        : idleClassName
+  );
+
+  const body = (
+    <>
       {children}
       <span className={cn("tabular-nums", active ? "opacity-70" : "opacity-50")}>
         {count}
       </span>
-    </button>
+    </>
+  );
+
+  // An empty universe stays visible but isn't a destination — it shows the
+  // shape of the archive without offering a page with nothing on it.
+  if (disabled) {
+    return (
+      <span className={className} aria-disabled="true">
+        {body}
+      </span>
+    );
+  }
+
+  // A link, not a button: a universe is a place now, so middle-click and
+  // open-in-new-tab work, and the address bar reflects where you are.
+  return (
+    <Link to={to} aria-current={active ? "page" : undefined} className={className}>
+      {body}
+    </Link>
   );
 }

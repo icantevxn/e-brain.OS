@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { Pencil, ArrowLeft, ExternalLink } from "lucide-react";
 import ItemDialog from "@/components/ItemDialog";
+import DeleteButton from "@/components/DeleteButton";
 import { Button } from "@/components/ui/button";
 import { useArchive } from "@/ArchiveContext";
 import { fmt, hexId } from "@/lib/format";
@@ -21,7 +22,7 @@ const URL_RE = /https?:\/\/\S+/;
  * bookmarked, shared to yourself, and returned to with the back button.
  */
 export default function ObjectView() {
-  const { worldId, itemId } = useParams();
+  const { universe, worldId, itemId } = useParams();
   const navigate = useNavigate();
   const { worlds, updateItem, removeItem } = useArchive();
 
@@ -36,9 +37,10 @@ export default function ObjectView() {
   if (!world) return <Navigate to="/" replace />;
   if (!item) return <Navigate to={worldPath(world)} replace />;
 
-  // Reached by id or a pre-rename slug — normalise the address.
+  // Reached by id, a pre-rename slug, or a stale universe — normalise.
   const canonical = itemPath(world, item);
-  if (`/w/${worldId}/${itemId}` !== canonical) return <Navigate to={canonical} replace />;
+  if (`/${universe}/${worldId}/${itemId}` !== canonical)
+    return <Navigate to={canonical} replace />;
 
   const t = typeOf(world);
   const st = statusOf(item);
@@ -91,15 +93,25 @@ export default function ObjectView() {
               {(item.brand || "Unknown").toUpperCase()} · {hexId(item.id, 6)}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setEditing(true)}
-            className="shrink-0 font-mono text-[10px] uppercase tracking-[0.15em]"
-          >
-            <Pencil className="size-3.5" />
-            Edit
-          </Button>
+          {/* Delete used to live inside the edit dialog, two steps from here.
+              It's a first-class action, so it sits beside Edit. */}
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditing(true)}
+              className="font-mono text-[10px] uppercase tracking-[0.15em]"
+            >
+              <Pencil className="size-3.5" />
+              Edit
+            </Button>
+            <DeleteButton
+              onDelete={() => {
+                removeItem(world.id, item.id);
+                navigate(worldPath(world), { replace: true });
+              }}
+            />
+          </div>
         </div>
 
         <dl className="mt-6 grid grid-cols-2 gap-px border bg-border sm:grid-cols-3">

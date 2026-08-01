@@ -71,7 +71,7 @@ export default function WorldDialog({ modal, onSave, onDelete, onClose }) {
 
           <fieldset>
             <legend className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em]">
-              Type
+              Universe
             </legend>
             <div className="grid grid-cols-3 gap-2">
               {Object.entries(WORLD_TYPES).map(([key, t]) => {

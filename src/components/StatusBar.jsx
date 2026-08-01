@@ -26,8 +26,8 @@ export default function StatusBar() {
   // Sits outside <Routes>, so it reads the URL rather than receiving params.
   // Both hooks run unconditionally — `||` between two useMatch calls would
   // short-circuit the second and change hook order between renders.
-  const objectMatch = useMatch("/w/:worldId/:itemId");
-  const worldMatch = useMatch("/w/:worldId");
+  const objectMatch = useMatch("/:universe/:worldId/:itemId");
+  const worldMatch = useMatch("/:universe/:worldId");
   const match = objectMatch || worldMatch;
 
   const active = match ? findWorld(worlds, match.params.worldId) : null;

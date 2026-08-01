@@ -56,9 +56,12 @@ export default function EBrainOS() {
 
         <main className="flex min-h-0 flex-1 flex-col">
           <Routes>
+            {/* A universe is the same dome, narrowed — so it gets a real
+                address instead of being a toggle you can't link to. */}
             <Route path="/" element={<MapView />} />
-            <Route path="/w/:worldId" element={<WorldView />} />
-            <Route path="/w/:worldId/:itemId" element={<ObjectView />} />
+            <Route path="/:universe" element={<MapView />} />
+            <Route path="/:universe/:worldId" element={<WorldView />} />
+            <Route path="/:universe/:worldId/:itemId" element={<ObjectView />} />
             {/* A stale bookmark or a deleted world lands home rather than blank. */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

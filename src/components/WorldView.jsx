@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { Plus, Pencil } from "lucide-react";
 import ObjectCard from "@/components/ObjectCard";
+import DeleteButton from "@/components/DeleteButton";
 import WorldDialog from "@/components/WorldDialog";
 import ItemDialog from "@/components/ItemDialog";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { useArchive } from "@/ArchiveContext";
 import { fmt } from "@/lib/format";
 import { STATUS_KEYS } from "@/lib/status";
 import { typeOf } from "@/lib/types";
-import { findWorld, worldSlug, itemPath, worldPath } from "@/lib/slug";
+import { findWorld, itemPath, worldPath } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,22 +23,27 @@ import { cn } from "@/lib/utils";
  * scrolling. A grid shows everything at once and gets out of the way.
  */
 export default function WorldView() {
-  const { worldId } = useParams();
+  const { universe, worldId } = useParams();
   const navigate = useNavigate();
-  const { worlds, updateWorld, removeWorld, addItem } = useArchive();
+  const { worlds, updateWorld, removeWorld, addItem, updateItem, removeItem } =
+    useArchive();
 
   const [filter, setFilter] = useState("all");
   const [worldModal, setWorldModal] = useState(false);
   const [newItem, setNewItem] = useState(false);
+  // The object being edited from the grid, so you don't have to open its page
+  // just to fix a typo.
+  const [editing, setEditing] = useState(null);
 
   const world = findWorld(worlds, worldId);
 
   // A deleted world, or a stale bookmark. Home beats a blank screen.
   if (!world) return <Navigate to="/" replace />;
 
-  // Reached by id (an old link, or one saved before a rename) — send it to the
-  // readable address so what's in the bar matches what's on screen.
-  if (worldId !== worldSlug(world)) return <Navigate to={worldPath(world)} replace />;
+  // Reached by id, a pre-rename slug, or under the universe it used to be in.
+  // Normalise so the address bar matches what's on screen.
+  const canonical = worldPath(world);
+  if (`/${universe}/${worldId}` !== canonical) return <Navigate to={canonical} replace />;
 
   const t = typeOf(world);
   const filters = [
@@ -133,15 +139,31 @@ export default function WorldView() {
         <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-8">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(190px,1fr))]">
             {items.map((it) => (
-              // A real link, not a click handler: objects have addresses now, so
-              // cmd-click and long-press-to-open behave as expected.
-              <Link
-                key={it.id}
-                to={itemPath(world, it)}
-                className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <ObjectCard item={it} type={t} />
-              </Link>
+              // The controls are siblings of the link, not children: a button
+              // inside an anchor is invalid markup and swallows cmd-click.
+              <div key={it.id} className="group/card relative">
+                <Link
+                  to={itemPath(world, it)}
+                  className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ObjectCard item={it} type={t} />
+                </Link>
+
+                {/* Always present on touch, where there is no hover to reveal
+                    them; fading in on pointer devices keeps the grid clean. */}
+                <div className="absolute right-2 top-2 flex gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover/card:opacity-100 sm:group-focus-within/card:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(it)}
+                    aria-label={`Edit ${it.name}`}
+                    title="Edit"
+                    className="inline-flex items-center rounded-md border border-border/70 bg-background/70 px-2 py-1.5 text-muted-foreground backdrop-blur-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <DeleteButton compact onDelete={() => removeItem(world.id, it.id)} />
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -172,6 +194,24 @@ export default function WorldView() {
             setNewItem(false);
           }}
           onClose={() => setNewItem(false)}
+        />
+      )}
+
+      {editing && (
+        <ItemDialog
+          key={editing.id}
+          modal={{ mode: "edit", item: editing }}
+          world={world}
+          worlds={worlds}
+          onSave={(data) => {
+            updateItem(world.id, editing.id, data);
+            setEditing(null);
+          }}
+          onDelete={() => {
+            removeItem(world.id, editing.id);
+            setEditing(null);
+          }}
+          onClose={() => setEditing(null)}
         />
       )}
     </div>

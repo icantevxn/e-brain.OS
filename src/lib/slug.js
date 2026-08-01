@@ -28,10 +28,25 @@ export function slugify(name) {
 export const worldSlug = (world) => slugify(world?.name) || world?.id || "";
 export const itemSlug = (item) => slugify(item?.name) || item?.id || "";
 
-export const worldPath = (world) => `/w/${worldSlug(world)}`;
-export const itemPath = (world, item) => `/w/${worldSlug(world)}/${itemSlug(item)}`;
+/**
+ * A world's universe. Stored as `type` on the record — the field name predates
+ * the vocabulary and renaming it would mean migrating every saved archive for
+ * no behavioural gain.
+ */
+export const universeOf = (world) => world?.type || "fashion";
 
-/** Slug first, then id — so pre-rename links keep working. */
+export const universePath = (universe) => `/${universe}`;
+export const worldPath = (world) => `/${universeOf(world)}/${worldSlug(world)}`;
+export const itemPath = (world, item) =>
+  `/${universeOf(world)}/${worldSlug(world)}/${itemSlug(item)}`;
+
+/**
+ * Slug first, then id — so pre-rename links keep working.
+ *
+ * The universe segment is deliberately *not* part of the match. A world can be
+ * re-typed at any time, and a link written before that should still find it;
+ * the caller redirects to the corrected path afterwards.
+ */
 export function findWorld(worlds, param) {
   if (!param) return null;
   return (

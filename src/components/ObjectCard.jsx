@@ -32,9 +32,10 @@ export default function ObjectCard({ item, type }) {
             className="size-full bg-[radial-gradient(circle_at_35%_28%,rgba(244,241,234,0.12),transparent_62%)]"
           />
         )}
+        {/* Nudged left to clear the delete control that sits above the card. */}
         <span
           aria-hidden
-          className={cn("absolute right-3 top-3 size-1.5 rounded-full", st.bg)}
+          className={cn("absolute right-10 top-4 size-1.5 rounded-full", st.bg)}
           title={type.status[item.status] || type.status.wishlist}
         />
       </div>

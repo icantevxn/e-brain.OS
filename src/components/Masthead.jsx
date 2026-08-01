@@ -2,7 +2,8 @@ import { Link, useMatch } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import ArchiveActions from "@/components/ArchiveActions";
 import { useArchive } from "@/ArchiveContext";
-import { findWorld, findItem, worldPath } from "@/lib/slug";
+import { findWorld, findItem, worldPath, universePath } from "@/lib/slug";
+import { WORLD_TYPES } from "@/lib/types";
 
 /**
  * One bar: where you are, and what you can do to the archive as a whole.
@@ -17,9 +18,13 @@ export default function Masthead() {
 
   // useMatch rather than useParams: this sits outside <Routes>, so it has no
   // params of its own and has to ask the router what the URL looks like.
-  const inWorld = useMatch("/w/:worldId");
-  const inObject = useMatch("/w/:worldId/:itemId");
+  const inUniverse = useMatch("/:universe");
+  const inWorld = useMatch("/:universe/:worldId");
+  const inObject = useMatch("/:universe/:worldId/:itemId");
+
   const match = inObject || inWorld;
+  const universeKey = (match || inUniverse)?.params.universe;
+  const universe = universeKey ? WORLD_TYPES[universeKey] : null;
 
   const world = match ? findWorld(worlds, match.params.worldId) : null;
   const item = inObject ? findItem(world, inObject.params.itemId) : null;
@@ -32,6 +37,15 @@ export default function Masthead() {
       >
         e-brain<span className="text-muted-foreground">.OS</span>
       </Link>
+
+      {universe && (
+        <>
+          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <Crumb to={universePath(universeKey)} current={!world}>
+            {universe.label}
+          </Crumb>
+        </>
+      )}
 
       {world && (
         <>
