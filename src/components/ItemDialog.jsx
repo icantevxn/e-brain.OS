@@ -31,6 +31,7 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
   const [status, setStatus] = useState(it.status || "wishlist");
   const [image, setImage] = useState(it.image || "");
   const [notes, setNotes] = useState(it.notes || "");
+  const [source, setSource] = useState(it.source || "");
 
   const [link, setLink] = useState("");
   const [capturing, setCapturing] = useState(false);
@@ -66,6 +67,7 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
       setPrice((v) => v || fields.price);
       setImage((v) => v || fields.image);
       setNotes((v) => v || fields.notes);
+      setSource((v) => v || fields.source || url);
 
       if (meta.blocked) {
         setCaptureNote({
@@ -98,6 +100,7 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
       status,
       image: image.trim(),
       notes: notes.trim(),
+      source: source.trim(),
       moveTo,
     });
   };
@@ -278,6 +281,19 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
               )}
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="item-source" className={monoLabel}>
+              Source link
+            </Label>
+            <Input
+              id="item-source"
+              type="url"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder="https://…"
+            />
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="item-notes" className={monoLabel}>

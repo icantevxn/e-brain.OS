@@ -33,6 +33,14 @@ export interface Item {
   status?: StatusKey;
   image?: string;
   notes?: string;
+  /**
+   * Where this came from — the page a capture was filed from, or a link you
+   * added by hand. Captures used to hide this in `notes`, which polluted the
+   * field and lost the link whenever the page supplied a real description.
+   * Items filed before this existed still carry it in `notes`, so readers fall
+   * back to looking there.
+   */
+  source?: string;
   /** YYYY-MM-DD. */
   added?: string;
 }

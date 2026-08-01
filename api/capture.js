@@ -29,6 +29,9 @@ function draft(fields = {}) {
     price: fields.price || "",
     image: fields.image || "",
     notes: fields.notes || "",
+    // Always recorded, even when the page could not be read — a link you can
+    // open later is the most useful thing a failed capture can leave behind.
+    source: fields.source || "",
     status: "wishlist",
   };
 }
@@ -119,7 +122,7 @@ export default async function handler(req, res) {
       // A page we can't read isn't an error the user should have to act on —
       // hand back an empty draft carrying the URL so it can be finished by hand.
       return finish(
-        { name: safeUrl, notes: `Couldn't read this page: ${err.message}` },
+        { name: safeUrl, source: safeUrl, notes: `Couldn't read this page: ${err.message}` },
         {
           url: safeUrl,
           blocked: err.message,
@@ -136,7 +139,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("[e-brain.os] extraction failed", err?.message || err);
     return finish(
-      { name: safeUrl, notes: "Couldn't read this page" },
+      { name: safeUrl, source: safeUrl, notes: "Couldn't read this page" },
       { url: safeUrl, blocked: "Could not read that page", enriched: false, gaps: [] }
     );
   }
@@ -164,9 +167,9 @@ export default async function handler(req, res) {
   }
 
   return finish(
-    // Keep the source link on anything filed unattended — without the dialog in
-    // front of you, the URL is often the only way back to what you saw.
-    save && !fields.notes ? { ...fields, notes: safeUrl } : fields,
+    // The link is a field of its own now, so it is always kept — previously it
+    // was squeezed into notes and dropped whenever the page had a description.
+    { ...fields, source: finalUrl || safeUrl },
     {
       url: safeUrl,
       finalUrl,

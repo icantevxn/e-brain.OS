@@ -12,7 +12,7 @@ import { typeOf } from "@/lib/universes";
 import { findWorld, findItem, itemPath, worldPath, INBOX_WORLD_ID } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
-/** A URL sitting in the notes is the source link the capture kept. */
+/** Captures made before `source` existed left the link in `notes`. */
 const URL_RE = /https?:\/\/\S+/;
 
 /**
@@ -48,7 +48,7 @@ export default function ObjectView({ inbox = false }) {
   const st = statusOf(item);
   const statusText = t.status[item.status] || t.status.wishlist;
   const showImage = item.image && !broken;
-  const sourceUrl = item.notes?.match(URL_RE)?.[0];
+  const sourceUrl = item.source?.trim() || item.notes?.match(URL_RE)?.[0];
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
@@ -148,7 +148,7 @@ export default function ObjectView({ inbox = false }) {
             className="mt-4 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground"
           >
             <ExternalLink className="size-3.5" />
-            Open source page
+            {hostOf(sourceUrl) || "Open source page"}
           </a>
         )}
       </article>
@@ -175,6 +175,15 @@ export default function ObjectView({ inbox = false }) {
       )}
     </div>
   );
+}
+
+/** Show where a link goes, not just that it exists. */
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
 }
 
 function Stat({ label, value, className }) {

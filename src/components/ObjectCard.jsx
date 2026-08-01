@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link2 } from "lucide-react";
 import { fmt } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
@@ -42,8 +43,13 @@ export default function ObjectCard({ item, type }) {
 
       <div className="p-3">
         <p className="truncate font-display text-lg leading-tight">{item.name}</p>
-        <p className="mt-1 truncate font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="mt-1 flex items-center gap-1 truncate font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
           {(item.brand || "Unknown").toUpperCase()}
+          {/* Marks which objects can be traced back to where you found them.
+              Not a link — the whole card is already one. */}
+          {(item.source || "").trim() && (
+            <Link2 className="size-2.5 shrink-0 opacity-60" aria-label="Has a source link" />
+          )}
         </p>
         {type.showPrice && (
           <p className="mt-2 font-mono text-[11px] text-hunting">
