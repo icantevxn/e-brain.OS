@@ -4,7 +4,9 @@ import { Plus } from "lucide-react";
 import DomeGallery from "@/components/vendor/DomeGallery";
 import WorldDialog from "@/components/WorldDialog";
 import { Button } from "@/components/ui/button";
+import OrbitShuttle from "@/components/OrbitShuttle";
 import { useArchive } from "@/ArchiveContext";
+import { realWorlds } from "@/lib/inbox";
 import { worldPath, universeOf, universePath } from "@/lib/slug";
 import { worldTiles } from "@/lib/covers";
 import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/types";
@@ -21,7 +23,12 @@ import { cn } from "@/lib/utils";
  */
 export default function MapView() {
   const navigate = useNavigate();
-  const { worlds, createWorld } = useArchive();
+  const { worlds: allWorlds, createWorld } = useArchive();
+
+  // In Orbit is a staging area, not a place on the map. Excluding it here keeps
+  // it out of the dome, out of the universe counts, and out of the empty-archive
+  // check — a fresh archive holding only captures is still an empty archive.
+  const worlds = useMemo(() => realWorlds(allWorlds), [allWorlds]);
 
   // The universe comes from the URL, not from state: /fashion is the same dome
   // narrowed, so it can be linked and bookmarked. That makes it single-select —
@@ -82,6 +89,9 @@ export default function MapView() {
           <Plus className="size-3.5" />
           Create first world
         </Button>
+        {/* Captures can arrive before any world exists — the shuttle is the
+            only way to reach them until one does. */}
+        <OrbitShuttle worlds={allWorlds} />
         {dialog}
       </div>
     );
@@ -181,6 +191,8 @@ export default function MapView() {
           </Button>
         </div>
       </div>
+
+      <OrbitShuttle worlds={allWorlds} />
 
       {dialog}
     </div>

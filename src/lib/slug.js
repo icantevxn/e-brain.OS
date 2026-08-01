@@ -35,10 +35,26 @@ export const itemSlug = (item) => slugify(item?.name) || item?.id || "";
  */
 export const universeOf = (world) => world?.type || "fashion";
 
+/**
+ * The staging world's id. It lives here rather than in lib/inbox so the path
+ * helpers can special-case it without the two modules importing each other.
+ * Mirrors INBOX_ID in api/_lib/inbox.js.
+ */
+export const INBOX_WORLD_ID = "inbox";
+
 export const universePath = (universe) => `/${universe}`;
-export const worldPath = (world) => `/${universeOf(world)}/${worldSlug(world)}`;
-export const itemPath = (world, item) =>
-  `/${universeOf(world)}/${worldSlug(world)}/${itemSlug(item)}`;
+
+/**
+ * In Orbit gets a top-level address instead of living under a universe. It is
+ * pinned to `fashion` only because every world needs a universe, and putting
+ * that in its URL would imply a categorisation it explicitly doesn't have.
+ */
+export const worldPath = (world) =>
+  world?.id === INBOX_WORLD_ID
+    ? "/in-orbit"
+    : `/${universeOf(world)}/${worldSlug(world)}`;
+
+export const itemPath = (world, item) => `${worldPath(world)}/${itemSlug(item)}`;
 
 /**
  * Slug first, then id — so pre-rename links keep working.

@@ -59,9 +59,19 @@ export default function EBrainOS() {
             {/* A universe is the same dome, narrowed — so it gets a real
                 address instead of being a toggle you can't link to. */}
             <Route path="/" element={<MapView />} />
+
+            {/* In Orbit sits above the universes rather than inside one: it is
+                pinned to `fashion` only because every world needs a universe,
+                and putting that in its URL would imply a categorisation it
+                explicitly doesn't have. Declared before /:universe so it isn't
+                swallowed by it. */}
+            <Route path="/in-orbit" element={<WorldView inbox />} />
+            <Route path="/in-orbit/:itemId" element={<ObjectView inbox />} />
+
             <Route path="/:universe" element={<MapView />} />
             <Route path="/:universe/:worldId" element={<WorldView />} />
             <Route path="/:universe/:worldId/:itemId" element={<ObjectView />} />
+
             {/* A stale bookmark or a deleted world lands home rather than blank. */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

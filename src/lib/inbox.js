@@ -1,16 +1,17 @@
-import { universeOf } from "./slug.js";
+import { universeOf, INBOX_WORLD_ID } from "./slug.js";
 
 /* ═══════════════════════════════════════════════
    inbox.js — the staging world, from the client's side.
-
-   Mirrors INBOX_ID in api/_lib/inbox.js. Duplicating one string across the
-   client and the serverless function is cheaper than a shared module that both
-   bundlers have to agree on, but they must stay in step.
 ═══════════════════════════════════════════════ */
 
-export const INBOX_WORLD_ID = "inbox";
+export { INBOX_WORLD_ID };
 
 export const isInbox = (world) => world?.id === INBOX_WORLD_ID;
+
+/** Everything except the staging world — what the dome and counts should show. */
+export const realWorlds = (worlds) => worlds.filter((w) => w.id !== INBOX_WORLD_ID);
+
+export const findInbox = (worlds) => worlds.find((w) => w.id === INBOX_WORLD_ID) || null;
 
 /**
  * Where an object in `world` is allowed to go.

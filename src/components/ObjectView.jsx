@@ -9,7 +9,7 @@ import { useArchive } from "@/ArchiveContext";
 import { fmt, hexId } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { typeOf } from "@/lib/types";
-import { findWorld, findItem, itemPath, worldPath } from "@/lib/slug";
+import { findWorld, findItem, itemPath, worldPath, INBOX_WORLD_ID } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
 /** A URL sitting in the notes is the source link the capture kept. */
@@ -22,8 +22,9 @@ const URL_RE = /https?:\/\/\S+/;
  * reached by scrolling a list and could not be linked to. As a route it can be
  * bookmarked, shared to yourself, and returned to with the back button.
  */
-export default function ObjectView() {
-  const { universe, worldId, itemId } = useParams();
+export default function ObjectView({ inbox = false }) {
+  const { universe, worldId: routeWorldId, itemId } = useParams();
+  const worldId = inbox ? INBOX_WORLD_ID : routeWorldId;
   const navigate = useNavigate();
   const { worlds, updateItem, removeItem } = useArchive();
 
@@ -40,8 +41,8 @@ export default function ObjectView() {
 
   // Reached by id, a pre-rename slug, or a stale universe — normalise.
   const canonical = itemPath(world, item);
-  if (`/${universe}/${worldId}/${itemId}` !== canonical)
-    return <Navigate to={canonical} replace />;
+  const arrivedAt = inbox ? `/in-orbit/${itemId}` : `/${universe}/${worldId}/${itemId}`;
+  if (arrivedAt !== canonical) return <Navigate to={canonical} replace />;
 
   const t = typeOf(world);
   const st = statusOf(item);

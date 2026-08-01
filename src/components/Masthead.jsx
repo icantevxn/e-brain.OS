@@ -2,7 +2,8 @@ import { Link, useMatch } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import ArchiveActions from "@/components/ArchiveActions";
 import { useArchive } from "@/ArchiveContext";
-import { findWorld, findItem, worldPath, universePath } from "@/lib/slug";
+import { realWorlds } from "@/lib/inbox";
+import { findWorld, findItem, worldPath, universePath, INBOX_WORLD_ID } from "@/lib/slug";
 import { WORLD_TYPES } from "@/lib/types";
 
 /**
@@ -15,19 +16,35 @@ import { WORLD_TYPES } from "@/lib/types";
  */
 export default function Masthead() {
   const { worlds } = useArchive();
+  const filed = realWorlds(worlds);
 
   // useMatch rather than useParams: this sits outside <Routes>, so it has no
   // params of its own and has to ask the router what the URL looks like.
   const inUniverse = useMatch("/:universe");
   const inWorld = useMatch("/:universe/:worldId");
   const inObject = useMatch("/:universe/:worldId/:itemId");
+  const inOrbit = useMatch("/in-orbit");
+  const inOrbitObject = useMatch("/in-orbit/:itemId");
 
   const match = inObject || inWorld;
-  const universeKey = (match || inUniverse)?.params.universe;
+
+  // In Orbit belongs to no universe, so it gets no universe crumb — that is the
+  // whole point of lifting it out of /fashion.
+  const orbit = inOrbit || inOrbitObject;
+  const universeKey = orbit ? null : (match || inUniverse)?.params.universe;
   const universe = universeKey ? WORLD_TYPES[universeKey] : null;
 
-  const world = match ? findWorld(worlds, match.params.worldId) : null;
-  const item = inObject ? findItem(world, inObject.params.itemId) : null;
+  const world = orbit
+    ? findWorld(worlds, INBOX_WORLD_ID)
+    : match
+      ? findWorld(worlds, match.params.worldId)
+      : null;
+
+  const item = inOrbitObject
+    ? findItem(world, inOrbitObject.params.itemId)
+    : inObject
+      ? findItem(world, inObject.params.itemId)
+      : null;
 
   return (
     <header className="flex shrink-0 items-center gap-2 border-b px-5 py-3 sm:px-8">
@@ -64,9 +81,12 @@ export default function Masthead() {
       )}
 
       <div className="ml-auto flex shrink-0 items-center gap-3">
+        {/* Counts the archive, not the inbox. In Orbit holds things that
+            haven't been filed yet, and the dome excludes it too — the shuttle's
+            own badge is what reports the backlog. */}
         <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:inline">
-          {worlds.length} {worlds.length === 1 ? "world" : "worlds"} /{" "}
-          {worlds.reduce((sum, w) => sum + w.items.length, 0)} obj
+          {filed.length} {filed.length === 1 ? "world" : "worlds"} /{" "}
+          {filed.reduce((sum, w) => sum + w.items.length, 0)} obj
         </span>
         <ArchiveActions />
       </div>

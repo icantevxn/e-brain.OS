@@ -12,7 +12,7 @@ import { useArchive } from "@/ArchiveContext";
 import { fmt } from "@/lib/format";
 import { STATUS_KEYS } from "@/lib/status";
 import { typeOf } from "@/lib/types";
-import { findWorld, itemPath, worldPath } from "@/lib/slug";
+import { findWorld, itemPath, worldPath, INBOX_WORLD_ID } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,8 +23,11 @@ import { cn } from "@/lib/utils";
  * holds more than a handful of objects, and its drag surface swallowed page
  * scrolling. A grid shows everything at once and gets out of the way.
  */
-export default function WorldView() {
-  const { universe, worldId } = useParams();
+export default function WorldView({ inbox = false }) {
+  const { universe, worldId: routeWorldId } = useParams();
+  // In Orbit has a fixed address of its own, so its id comes from the route
+  // shape rather than a slug in the path.
+  const worldId = inbox ? INBOX_WORLD_ID : routeWorldId;
   const navigate = useNavigate();
   const { worlds, updateWorld, removeWorld, addItem, updateItem, removeItem } =
     useArchive();
@@ -42,9 +45,11 @@ export default function WorldView() {
   if (!world) return <Navigate to="/" replace />;
 
   // Reached by id, a pre-rename slug, or under the universe it used to be in.
-  // Normalise so the address bar matches what's on screen.
+  // Normalise so the address bar matches what's on screen. In Orbit is already
+  // at its canonical address, so it skips this.
   const canonical = worldPath(world);
-  if (`/${universe}/${worldId}` !== canonical) return <Navigate to={canonical} replace />;
+  if (!inbox && `/${universe}/${worldId}` !== canonical)
+    return <Navigate to={canonical} replace />;
 
   const t = typeOf(world);
   const filters = [
@@ -65,15 +70,25 @@ export default function WorldView() {
         <h2 className="font-display text-4xl leading-none tracking-tight sm:text-6xl">
           {world.name}
         </h2>
-        <span
-          className={cn(
-            "mb-1 border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.18em]",
-            t.text,
-            t.border
-          )}
-        >
-          {t.label}
-        </span>
+        {/* In Orbit's universe is an implementation detail — it is pinned to
+            `fashion` because every world needs one, and showing that badge
+            would claim a categorisation these captures haven't been given. */}
+        {!inbox && (
+          <span
+            className={cn(
+              "mb-1 border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.18em]",
+              t.text,
+              t.border
+            )}
+          >
+            {t.label}
+          </span>
+        )}
+        {inbox && (
+          <span className="mb-1 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+            Waiting to be filed
+          </span>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           <Button
