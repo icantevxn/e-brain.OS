@@ -1,4 +1,5 @@
 import { FolderInput } from "lucide-react";
+import { moveTargets, isInbox } from "@/lib/inbox";
 import { cn } from "@/lib/utils";
 
 /**
@@ -12,8 +13,12 @@ import { cn } from "@/lib/utils";
  * Android get their native pickers, desktop gets a normal dropdown, and there
  * is no menu component or focus trap to maintain.
  */
-export default function MoveControl({ worlds, currentWorldId, onMove, compact, className }) {
-  const others = worlds.filter((w) => w.id !== currentWorldId);
+export default function MoveControl({ world, worlds, onMove, compact, className }) {
+  // Same universe only — see moveTargets for why, and why In Orbit is exempt.
+  const others = moveTargets(worlds, world);
+
+  // Nowhere to go: the only world in its universe, and not a capture waiting to
+  // be filed. Showing a control that opens an empty list would be worse.
   if (others.length === 0) return null;
 
   return (
@@ -39,7 +44,7 @@ export default function MoveControl({ worlds, currentWorldId, onMove, compact, c
         className="absolute inset-0 cursor-pointer opacity-0"
       >
         <option value="" disabled>
-          Move to…
+          {isInbox(world) ? "File into…" : "Move to…"}
         </option>
         {others.map((w) => (
           <option key={w.id} value={w.id}>

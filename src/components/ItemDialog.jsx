@@ -16,6 +16,7 @@ import { STATUS } from "@/lib/status";
 import { typeOf, capitalize } from "@/lib/types";
 import { captureUrl } from "@/lib/remote";
 import { nameTaken } from "@/lib/slug";
+import { moveTargets } from "@/lib/inbox";
 import { cn } from "@/lib/utils";
 
 const monoLabel = "font-mono text-[10px] uppercase tracking-[0.18em]";
@@ -36,6 +37,8 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
   const [captureNote, setCaptureNote] = useState(null);
 
   const isNew = modal.mode === "new";
+
+  const destinations = moveTargets(worlds, world);
 
   // Checked against the world it's going *to*, not the one it's in — moving a
   // piece into a world that already has one by that name is the same clash.
@@ -248,9 +251,10 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
             />
           </div>
 
-          {/* Triage. This is how a capture leaves the Inbox, so it only shows
-              when there is somewhere else to send it. */}
-          {worlds.length > 1 && (
+          {/* Triage. Restricted to the same universe (In Orbit excepted), for
+              the same reason as the Move control — a cross-universe move
+              relabels a piece rather than relocating it. */}
+          {destinations.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="item-world" className={monoLabel}>
                 World
@@ -261,7 +265,7 @@ export default function ItemDialog({ modal, world, worlds = [], onSave, onDelete
                 onChange={(e) => setMoveTo(e.target.value)}
                 className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                {worlds.map((w) => (
+                {[world, ...destinations].filter(Boolean).map((w) => (
                   <option key={w.id} value={w.id} className="bg-background">
                     {w.name}
                   </option>

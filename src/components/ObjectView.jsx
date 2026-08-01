@@ -107,8 +107,8 @@ export default function ObjectView() {
               Edit
             </Button>
             <MoveControl
+              world={world}
               worlds={worlds}
-              currentWorldId={world.id}
               onMove={(target) => {
                 updateItem(world.id, item.id, { moveTo: target });
                 const nextWorld = worlds.find((w) => w.id === target);

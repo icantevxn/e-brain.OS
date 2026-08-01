@@ -164,8 +164,8 @@ export default function WorldView() {
                   </button>
                   <MoveControl
                     compact
+                    world={world}
                     worlds={worlds}
-                    currentWorldId={world.id}
                     onMove={(target) => updateItem(world.id, it.id, { moveTo: target })}
                   />
                   <DeleteButton compact onDelete={() => removeItem(world.id, it.id)} />
