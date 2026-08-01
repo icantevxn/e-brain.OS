@@ -14,13 +14,40 @@ const ROW_ID = "singleton";
 
 let sqlInstance = null;
 
-/** Lazy so a missing DATABASE_URL surfaces as a handled 500, not a cold-start crash. */
+/**
+ * Connection string, under whichever name the host injected it.
+ *
+ * Vercel's storage integration lets you choose the env var prefix when you
+ * create the database, so the same Neon instance can arrive as DATABASE_URL,
+ * POSTGRES_URL, or STORAGE_URL depending on what was picked in the dialog.
+ * Accepting all of them means a prefix choice can't silently break the API.
+ */
+const URL_ENV_VARS = [
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "STORAGE_URL",
+  "DATABASE_URL_UNPOOLED",
+  "POSTGRES_URL_NON_POOLING",
+];
+
+function connectionString() {
+  for (const name of URL_ENV_VARS) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return null;
+}
+
+/** Lazy so a missing connection string surfaces as a handled 500, not a cold-start crash. */
 function db() {
   if (!sqlInstance) {
-    if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is not set");
+    const url = connectionString();
+    if (!url) {
+      throw new Error(
+        `No database connection string. Set one of: ${URL_ENV_VARS.join(", ")}`
+      );
     }
-    sqlInstance = neon(process.env.DATABASE_URL);
+    sqlInstance = neon(url);
   }
   return sqlInstance;
 }
