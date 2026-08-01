@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { STORAGE_KEY } from "./storage.js";
 import { usePersistentState } from "./usePersistentState.js";
 import { uid, today } from "@/lib/format";
+import seed from "@/data/seed.json";
 import Masthead from "@/components/Masthead";
 import StatusBar from "@/components/StatusBar";
 import MapView from "@/components/MapView";
@@ -17,15 +18,14 @@ import ItemDialog from "@/components/ItemDialog";
    usePersistentState; the stored schema is owned by storage.js.
 ═══════════════════════════════════════════════ */
 
-/* One per type, so a fresh archive shows what the shelf can hold. */
-const SEED_WORLDS = [
-  { id: "w1", name: "Archive Prada", type: "fashion", items: [] },
-  { id: "w2", name: "Slow Fiction", type: "books", items: [] },
-  { id: "w3", name: "Hong Kong New Wave", type: "film", items: [] },
-  { id: "w4", name: "Ambient & Drone", type: "music", items: [] },
-  { id: "w5", name: "Sichuan", type: "food", items: [] },
-  { id: "w6", name: "Ura-Harajuku", type: "subculture", items: [] },
-];
+/**
+ * What a browser with no saved archive starts from. This is a real export
+ * (src/data/seed.json), so refreshing it is a drop-in: hit export in the
+ * masthead and replace the file wholesale — the envelope shape matches.
+ *
+ * Only used when storage is empty; an existing archive is never overwritten.
+ */
+const SEED_WORLDS = seed.worlds;
 
 export default function EBrainOS() {
   const [worlds, setWorlds, saveStatus] = usePersistentState(STORAGE_KEY, SEED_WORLDS);
@@ -91,7 +91,12 @@ export default function EBrainOS() {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-background fos-grain">
-      <Masthead worlds={worlds} active={active} onBack={exitWorld} />
+      <Masthead
+        worlds={worlds}
+        active={active}
+        onBack={exitWorld}
+        onImport={setWorlds}
+      />
 
       <main className="flex min-h-0 flex-1 flex-col">
         {active ? (

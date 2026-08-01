@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ArchiveActions from "@/components/ArchiveActions";
 import { today } from "@/lib/format";
 
 /**
@@ -7,7 +8,7 @@ import { today } from "@/lib/format";
  * information density, but carried by a serif wordmark and a hairline rule
  * rather than a blinking record dot.
  */
-export default function Masthead({ worlds, active, onBack }) {
+export default function Masthead({ worlds, active, onBack, onImport }) {
   const objectCount = worlds.reduce((sum, w) => sum + w.items.length, 0);
 
   return (
@@ -36,10 +37,12 @@ export default function Masthead({ worlds, active, onBack }) {
         {today()}
       </span>
 
-      <div className="ml-auto flex items-center gap-4">
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+      <div className="ml-auto flex items-center gap-3">
+        <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:inline">
           {worlds.length} {worlds.length === 1 ? "world" : "worlds"} / {objectCount} obj
         </span>
+
+        <ArchiveActions worlds={worlds} onImport={onImport} />
         {active && (
           <Button variant="ghost" size="sm" onClick={onBack} className="font-mono text-[11px] uppercase tracking-[0.15em]">
             <ArrowLeft className="size-3.5" />

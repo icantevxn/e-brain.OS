@@ -1,0 +1,72 @@
+{
+  "v": 1,
+  "exported": "2026-08-01",
+  "worlds": [
+    {
+      "id": "w1",
+      "name": "Archive Prada",
+      "items": [
+        {
+          "id": "8yhe8qc6",
+          "added": "2026-08-01",
+          "name": "Half Moon Metal Bag (white) SS2003",
+          "brand": "Prada",
+          "price": "979",
+          "status": "owned",
+          "image": "https://assets.vogue.com/photos/6310cf1b1326a4fefbc72dc4/master/w_2240,c_limit/00220h-prada-spring-2003-ready-to-weardetail.jpg",
+          "notes": "preppylook.ph"
+        },
+        {
+          "id": "ipptc822",
+          "added": "2026-08-01",
+          "name": "Mirror skirt SS1999",
+          "brand": "Prada",
+          "price": "1450",
+          "status": "hunting",
+          "image": "https://assets.vogue.com/photos/575adde6ddbe181d42c57f92/master/w_2240,c_limit/PRADA-SPRING-1999-RTW-DETAIL-51-AUDREY-MARNAY-CN10032895.jpg",
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "id": "w2",
+      "name": "Chanel",
+      "items": [],
+      "cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnazs15FOV15k8ig5H_Vf0O9mPwvl88xc-rwgeG8LoBQOpouW7ej2YsyQ&s=10"
+    },
+    {
+      "id": "w3",
+      "name": "Issey Miyake",
+      "items": [],
+      "cover": "https://yurikotakagi.com/img/2017/10/pleats_please_kenya_bw_2.jpg"
+    },
+    {
+      "id": "adve5y0h",
+      "items": [],
+      "name": "Hong Kong New Wave",
+      "cover": "",
+      "type": "film"
+    },
+    {
+      "id": "2c9cpu5b",
+      "items": [],
+      "name": "Malaysian",
+      "cover": "",
+      "type": "food"
+    },
+    {
+      "id": "civpizrj",
+      "items": [],
+      "name": "Brutalist Interiors",
+      "cover": "",
+      "type": "spaces"
+    },
+    {
+      "id": "hfbvx1fk",
+      "items": [],
+      "name": "Remakes",
+      "cover": "",
+      "type": "film"
+    }
+  ]
+}
