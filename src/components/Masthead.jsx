@@ -1,55 +1,80 @@
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Link, useMatch } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import ArchiveActions from "@/components/ArchiveActions";
-import { today } from "@/lib/format";
+import { useArchive } from "@/ArchiveContext";
 
 /**
- * Editorial masthead. Replaces the original REC/timecode chrome: same
- * information density, but carried by a serif wordmark and a hairline rule
- * rather than a blinking record dot.
+ * One bar: where you are, and what you can do to the archive as a whole.
+ *
+ * The breadcrumb replaces the old back button. A back button only ever went one
+ * place; a breadcrumb says where you are and lets you jump to any level, which
+ * matters more now that an object sits two levels deep. The date went with it —
+ * it was decoration, and this bar had three things competing for the same edge.
  */
-export default function Masthead({ worlds, active, onBack, onImport }) {
-  const objectCount = worlds.reduce((sum, w) => sum + w.items.length, 0);
+export default function Masthead() {
+  const { worlds } = useArchive();
+
+  // useMatch rather than useParams: this sits outside <Routes>, so it has no
+  // params of its own and has to ask the router what the URL looks like.
+  const inWorld = useMatch("/w/:worldId");
+  const inObject = useMatch("/w/:worldId/:itemId");
+  const match = inObject || inWorld;
+
+  const world = match ? worlds.find((w) => w.id === match.params.worldId) : null;
+  const item =
+    inObject && world
+      ? world.items.find((i) => i.id === inObject.params.itemId)
+      : null;
 
   return (
-    <header className="flex shrink-0 items-baseline gap-4 border-b px-5 py-3 sm:px-8">
-      {/* The wordmark doubles as the way home. A button rather than an anchor:
-          there are no routes here, so this changes state, it doesn't navigate.
-          Inert on the map itself, where there is nowhere to go back to. */}
-      <h1 className="font-display text-2xl leading-none tracking-tight sm:text-3xl">
-        {active ? (
-          <button
-            type="button"
-            onClick={onBack}
-            title="Back to the archive"
-            className="cursor-pointer underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            e-brain<span className="text-muted-foreground">.OS</span>
-          </button>
-        ) : (
-          <>
-            e-brain<span className="text-muted-foreground">.OS</span>
-          </>
-        )}
-      </h1>
+    <header className="flex shrink-0 items-center gap-2 border-b px-5 py-3 sm:px-8">
+      <Link
+        to="/"
+        className="shrink-0 font-display text-2xl leading-none tracking-tight underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-3xl"
+      >
+        e-brain<span className="text-muted-foreground">.OS</span>
+      </Link>
 
-      <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:inline">
-        {today()}
-      </span>
+      {world && (
+        <>
+          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <Crumb to={`/w/${world.id}`} current={!item}>
+            {world.name}
+          </Crumb>
+        </>
+      )}
 
-      <div className="ml-auto flex items-center gap-3">
+      {item && (
+        <>
+          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <Crumb current>{item.name}</Crumb>
+        </>
+      )}
+
+      <div className="ml-auto flex shrink-0 items-center gap-3">
         <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:inline">
-          {worlds.length} {worlds.length === 1 ? "world" : "worlds"} / {objectCount} obj
+          {worlds.length} {worlds.length === 1 ? "world" : "worlds"} /{" "}
+          {worlds.reduce((sum, w) => sum + w.items.length, 0)} obj
         </span>
-
-        <ArchiveActions worlds={worlds} onImport={onImport} />
-        {active && (
-          <Button variant="ghost" size="sm" onClick={onBack} className="font-mono text-[11px] uppercase tracking-[0.15em]">
-            <ArrowLeft className="size-3.5" />
-            Archive
-          </Button>
-        )}
+        <ArchiveActions />
       </div>
     </header>
+  );
+}
+
+/** The last crumb is where you already are, so it isn't a link. */
+function Crumb({ to, current, children }) {
+  const base =
+    "truncate font-mono text-[10px] uppercase tracking-[0.18em] max-w-[8rem] sm:max-w-xs";
+
+  if (current) return <span className={`${base} text-foreground`}>{children}</span>;
+
+  return (
+    <Link
+      to={to}
+      className={`${base} text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline`}
+    >
+      {children}
+    </Link>
   );
 }

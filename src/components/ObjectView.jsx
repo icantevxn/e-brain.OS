@@ -1,0 +1,155 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
+import { Pencil, ArrowLeft, ExternalLink } from "lucide-react";
+import ItemDialog from "@/components/ItemDialog";
+import { Button } from "@/components/ui/button";
+import { useArchive } from "@/ArchiveContext";
+import { fmt, hexId } from "@/lib/format";
+import { statusOf } from "@/lib/status";
+import { typeOf } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+/** A URL sitting in the notes is the source link the capture kept. */
+const URL_RE = /https?:\/\/\S+/;
+
+/**
+ * One object, at its own address.
+ *
+ * This used to be a panel beside the option wheel, which meant it could only be
+ * reached by scrolling a list and could not be linked to. As a route it can be
+ * bookmarked, shared to yourself, and returned to with the back button.
+ */
+export default function ObjectView() {
+  const { worldId, itemId } = useParams();
+  const navigate = useNavigate();
+  const { worlds, updateItem, removeItem } = useArchive();
+
+  const [editing, setEditing] = useState(false);
+  const [broken, setBroken] = useState(false);
+
+  const world = worlds.find((w) => w.id === worldId);
+  const item = world?.items.find((i) => i.id === itemId);
+
+  useEffect(() => setBroken(false), [item?.image]);
+
+  if (!world || !item) return <Navigate to={world ? `/w/${worldId}` : "/"} replace />;
+
+  const t = typeOf(world);
+  const st = statusOf(item);
+  const statusText = t.status[item.status] || t.status.wishlist;
+  const showImage = item.image && !broken;
+  const sourceUrl = item.notes?.match(URL_RE)?.[0];
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <article className="mx-auto w-full max-w-3xl px-5 py-6 sm:px-8 sm:py-10 fos-rise">
+        <Link
+          to={`/w/${world.id}`}
+          className="mb-6 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-3.5" />
+          {world.name}
+        </Link>
+
+        <div className="relative mb-6 aspect-[4/5] max-h-[52vh] w-full overflow-hidden border bg-card sm:aspect-[3/2]">
+          {showImage ? (
+            <img
+              src={item.image}
+              alt={item.name}
+              onError={() => setBroken(true)}
+              className="size-full object-cover"
+            />
+          ) : (
+            <div
+              aria-hidden
+              className="size-full bg-[radial-gradient(circle_at_35%_28%,rgba(244,241,234,0.14),transparent_62%)]"
+            />
+          )}
+          <span
+            className={cn(
+              "absolute left-4 top-4 border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.2em] backdrop-blur-sm",
+              st.text,
+              st.border
+            )}
+          >
+            {statusText}
+          </span>
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-4xl leading-[1.05] tracking-tight sm:text-5xl">
+              {item.name}
+            </h1>
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              {(item.brand || "Unknown").toUpperCase()} · {hexId(item.id, 6)}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditing(true)}
+            className="shrink-0 font-mono text-[10px] uppercase tracking-[0.15em]"
+          >
+            <Pencil className="size-3.5" />
+            Edit
+          </Button>
+        </div>
+
+        <dl className="mt-6 grid grid-cols-2 gap-px border bg-border sm:grid-cols-3">
+          {t.showPrice && <Stat label="Value" value={item.price ? fmt(item.price) : "—"} />}
+          <Stat label="Status" value={statusText} className={st.text} />
+          <Stat label="Added" value={item.added || "—"} />
+        </dl>
+
+        {item.notes && (
+          <p className="mt-6 max-w-prose border-l-2 pl-4 text-sm leading-relaxed break-words text-muted-foreground">
+            {item.notes}
+          </p>
+        )}
+
+        {sourceUrl && (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ExternalLink className="size-3.5" />
+            Open source page
+          </a>
+        )}
+      </article>
+
+      {editing && (
+        <ItemDialog
+          modal={{ mode: "edit", item }}
+          world={world}
+          worlds={worlds}
+          onSave={(data) => {
+            const target = updateItem(world.id, item.id, data);
+            setEditing(false);
+            // A move changes the object's address, so follow it there.
+            if (target !== world.id) navigate(`/w/${target}/${item.id}`, { replace: true });
+          }}
+          onDelete={() => {
+            removeItem(world.id, item.id);
+            navigate(`/w/${world.id}`, { replace: true });
+          }}
+          onClose={() => setEditing(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value, className }) {
+  return (
+    <div className="bg-background px-4 py-3">
+      <dt className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+        {label}
+      </dt>
+      <dd className={cn("mt-1 font-mono text-sm", className)}>{value}</dd>
+    </div>
+  );
+}

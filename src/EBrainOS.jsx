@@ -1,21 +1,23 @@
-import { useState, useMemo } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useSyncedState } from "./useSyncedState.js";
+import { ArchiveProvider } from "./ArchiveContext.jsx";
 import Login from "@/components/Login";
-import { uid, today } from "@/lib/format";
-import seed from "@/data/seed.json";
 import Masthead from "@/components/Masthead";
 import StatusBar from "@/components/StatusBar";
 import MapView from "@/components/MapView";
 import WorldView from "@/components/WorldView";
-import WorldDialog from "@/components/WorldDialog";
-import ItemDialog from "@/components/ItemDialog";
+import ObjectView from "@/components/ObjectView";
+import seed from "@/data/seed.json";
 
 /* ═══════════════════════════════════════════════
    e-brain.OS — personal taste tracking system
 
-   Orchestrator only: state, persistence and the handlers that mutate it.
-   Everything visual lives in @/components. The archive lives on the server via
-   useSyncedState; localStorage is a cache behind it, owned by storage.js.
+   Shell only: auth, the synced archive, and the routes. Everything that draws
+   or mutates lives in @/components and @/ArchiveContext.
+
+   Routes are real URLs rather than component state, so the browser's back
+   button works, a world can be bookmarked on a phone, and an object has an
+   address you can return to.
 ═══════════════════════════════════════════════ */
 
 /**
@@ -23,94 +25,13 @@ import ItemDialog from "@/components/ItemDialog";
  * (src/data/seed.json), so refreshing it is a drop-in: hit export in the
  * masthead and replace the file wholesale — the envelope shape matches.
  *
- * Only used when storage is empty; an existing archive is never overwritten.
+ * Only used when the server has nothing stored; an existing archive is never
+ * overwritten.
  */
 const SEED_WORLDS = seed.worlds;
 
 export default function EBrainOS() {
   const { worlds, setWorlds, saveStatus, auth, signIn } = useSyncedState(SEED_WORLDS);
-  const [activeId, setActiveId] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [worldModal, setWorldModal] = useState(null);
-  const [itemModal, setItemModal] = useState(null);
-
-  const active = useMemo(
-    () => worlds.find((w) => w.id === activeId) || null,
-    [worlds, activeId]
-  );
-
-  const enterWorld = (id) => {
-    setActiveId(id);
-    setFilter("all");
-  };
-  const exitWorld = () => setActiveId(null);
-
-  const saveWorld = (data) => {
-    if (worldModal.mode === "new")
-      setWorlds([...worlds, { id: uid(), items: [], ...data }]);
-    else
-      setWorlds(
-        worlds.map((w) => (w.id === worldModal.world.id ? { ...w, ...data } : w))
-      );
-    setWorldModal(null);
-  };
-
-  const deleteWorld = (id) => {
-    setWorlds(worlds.filter((w) => w.id !== id));
-    setWorldModal(null);
-    if (activeId === id) setActiveId(null);
-  };
-
-  /**
-   * `moveTo` is the target world. It differs from the current one only when the
-   * dialog's world selector was changed — which is how captures get triaged out
-   * of the Inbox.
-   */
-  const saveItem = ({ moveTo, ...data }) => {
-    const targetId = moveTo || activeId;
-
-    setWorlds((prev) => {
-      if (itemModal.mode === "new") {
-        return prev.map((w) =>
-          w.id === targetId
-            ? { ...w, items: [{ id: uid(), added: today(), ...data }, ...w.items] }
-            : w
-        );
-      }
-
-      const updated = { ...itemModal.item, ...data };
-
-      // A move is a delete and an insert; doing both in one pass keeps the
-      // item from ever existing in two worlds or none.
-      if (targetId !== activeId) {
-        return prev.map((w) => {
-          if (w.id === activeId)
-            return { ...w, items: w.items.filter((i) => i.id !== updated.id) };
-          if (w.id === targetId) return { ...w, items: [updated, ...w.items] };
-          return w;
-        });
-      }
-
-      return prev.map((w) =>
-        w.id === activeId
-          ? { ...w, items: w.items.map((i) => (i.id === updated.id ? updated : i)) }
-          : w
-      );
-    });
-
-    setItemModal(null);
-  };
-
-  const deleteItem = (itemId) => {
-    setWorlds(
-      worlds.map((w) =>
-        w.id === activeId
-          ? { ...w, items: w.items.filter((it) => it.id !== itemId) }
-          : w
-      )
-    );
-    setItemModal(null);
-  };
 
   // Every hook above runs unconditionally; these gates sit below them so the
   // hook order never changes between renders.
@@ -129,56 +50,22 @@ export default function EBrainOS() {
   }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-background fos-grain">
-      <Masthead
-        worlds={worlds}
-        active={active}
-        onBack={exitWorld}
-        onImport={setWorlds}
-      />
+    <ArchiveProvider worlds={worlds} setWorlds={setWorlds} saveStatus={saveStatus}>
+      <div className="relative flex h-full flex-col overflow-hidden bg-background fos-grain">
+        <Masthead />
 
-      <main className="flex min-h-0 flex-1 flex-col">
-        {active ? (
-          <WorldView
-            key={active.id}
-            world={active}
-            filter={filter}
-            setFilter={setFilter}
-            onEditWorld={() => setWorldModal({ mode: "edit", world: active })}
-            onNewItem={() => setItemModal({ mode: "new" })}
-            onEditItem={(item) => setItemModal({ mode: "edit", item })}
-          />
-        ) : (
-          <MapView
-            worlds={worlds}
-            onEnter={enterWorld}
-            onNewWorld={() => setWorldModal({ mode: "new" })}
-          />
-        )}
-      </main>
+        <main className="flex min-h-0 flex-1 flex-col">
+          <Routes>
+            <Route path="/" element={<MapView />} />
+            <Route path="/w/:worldId" element={<WorldView />} />
+            <Route path="/w/:worldId/:itemId" element={<ObjectView />} />
+            {/* A stale bookmark or a deleted world lands home rather than blank. */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
 
-      <StatusBar worlds={worlds} active={active} saveStatus={saveStatus} />
-
-      {worldModal && (
-        <WorldDialog
-          key={worldModal.world?.id ?? "new"}
-          modal={worldModal}
-          onSave={saveWorld}
-          onDelete={deleteWorld}
-          onClose={() => setWorldModal(null)}
-        />
-      )}
-      {itemModal && (
-        <ItemDialog
-          key={itemModal.item?.id ?? "new"}
-          modal={itemModal}
-          world={active}
-          worlds={worlds}
-          onSave={saveItem}
-          onDelete={deleteItem}
-          onClose={() => setItemModal(null)}
-        />
-      )}
-    </div>
+        <StatusBar />
+      </div>
+    </ArchiveProvider>
   );
 }

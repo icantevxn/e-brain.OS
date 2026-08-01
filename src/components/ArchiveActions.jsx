@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { downloadArchive, parseArchive, mergeWorlds } from "@/lib/archive";
+import { useArchive } from "@/ArchiveContext";
 import { today } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,8 @@ import { cn } from "@/lib/utils";
  * worlds but never wipe the ones you have — which is why this needs no
  * confirmation step in front of it.
  */
-export default function ArchiveActions({ worlds, onImport }) {
+export default function ArchiveActions() {
+  const { worlds, setWorlds: onImport } = useArchive();
   const fileRef = useRef(null);
   const [note, setNote] = useState(null);
 

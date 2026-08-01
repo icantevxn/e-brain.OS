@@ -1,3 +1,5 @@
+import { useMatch } from "react-router-dom";
+import { useArchive } from "@/ArchiveContext";
 import { hexId } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +19,17 @@ const SAVE_READOUT = {
   serialize: { text: "Save failed", className: "text-destructive" },
 };
 
-export default function StatusBar({ worlds, active, saveStatus }) {
+export default function StatusBar() {
+  const { worlds, saveStatus } = useArchive();
+
+  // Sits outside <Routes>, so it reads the URL rather than receiving params.
+  // Both hooks run unconditionally — `||` between two useMatch calls would
+  // short-circuit the second and change hook order between renders.
+  const objectMatch = useMatch("/w/:worldId/:itemId");
+  const worldMatch = useMatch("/w/:worldId");
+  const match = objectMatch || worldMatch;
+
+  const active = match ? worlds.find((w) => w.id === match.params.worldId) : null;
   // Blocked localStorage used to mean "nothing persists". It no longer does —
   // the server holds the archive and the cache is only a paint accelerator — so
   // the sync status is the honest thing to show.

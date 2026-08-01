@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 import DomeGallery from "@/components/vendor/DomeGallery";
+import WorldDialog from "@/components/WorldDialog";
 import { Button } from "@/components/ui/button";
+import { useArchive } from "@/ArchiveContext";
 import { worldTiles } from "@/lib/covers";
 import { WORLD_TYPES, DEFAULT_TYPE } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -15,10 +18,17 @@ import { cn } from "@/lib/utils";
  * tile carries the id of the world it came from, so clicking any copy enters
  * that world.
  */
-export default function MapView({ worlds, onEnter, onNewWorld }) {
+export default function MapView() {
+  const navigate = useNavigate();
+  const { worlds, createWorld } = useArchive();
+
   // Empty set means "everything". Multi-select, so you can hold film + music
   // side by side without going back through an "All" step each time.
   const [active, setActive] = useState(() => new Set());
+  const [newWorld, setNewWorld] = useState(false);
+
+  const onEnter = (id) => navigate(`/w/${id}`);
+  const onNewWorld = () => setNewWorld(true);
 
   const counts = useMemo(() => {
     const tally = Object.fromEntries(Object.keys(WORLD_TYPES).map((k) => [k, 0]));
@@ -47,6 +57,21 @@ export default function MapView({ worlds, onEnter, onNewWorld }) {
       return next;
     });
 
+  // Rendered from both branches below; a brand-new archive needs it as much as
+  // a populated one.
+  const dialog = newWorld && (
+    <WorldDialog
+      modal={{ mode: "new" }}
+      onSave={(data) => {
+        const world = createWorld(data);
+        setNewWorld(false);
+        // Straight into the new world — you made it to put something in it.
+        navigate(`/w/${world.id}`);
+      }}
+      onClose={() => setNewWorld(false)}
+    />
+  );
+
   if (worlds.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
@@ -60,6 +85,7 @@ export default function MapView({ worlds, onEnter, onNewWorld }) {
           <Plus className="size-3.5" />
           Create first world
         </Button>
+        {dialog}
       </div>
     );
   }
@@ -166,6 +192,8 @@ export default function MapView({ worlds, onEnter, onNewWorld }) {
           </Button>
         </div>
       </div>
+
+      {dialog}
     </div>
   );
 }

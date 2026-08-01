@@ -3,8 +3,13 @@ import { fmt } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-/** Compact card for grid mode — for scanning a large registry at a glance. */
-export default function ObjectCard({ item, type, onEdit }) {
+/**
+ * Compact card for scanning a world at a glance.
+ *
+ * Not a button any more: the grid wraps each card in a router <Link>, and a
+ * button inside an anchor is invalid markup that breaks cmd-click.
+ */
+export default function ObjectCard({ item, type }) {
   const [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [item?.id, item?.image]);
 
@@ -12,11 +17,7 @@ export default function ObjectCard({ item, type, onEdit }) {
   const showImage = item.image && !broken;
 
   return (
-    <button
-      type="button"
-      onClick={onEdit}
-      className="group block w-full border bg-card text-left transition-colors hover:border-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
+    <div className="group block w-full border bg-card text-left transition-colors hover:border-foreground/40">
       <div className="relative aspect-square overflow-hidden">
         {showImage ? (
           <img
@@ -49,6 +50,6 @@ export default function ObjectCard({ item, type, onEdit }) {
           </p>
         )}
       </div>
-    </button>
+    </div>
   );
 }
